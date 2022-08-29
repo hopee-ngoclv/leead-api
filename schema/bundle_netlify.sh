@@ -3,12 +3,13 @@
 # Setup
 echo "1" 
 
-npm i redoc-cli
+yarn global add https-proxy-agent
+yarn global add redoc-cli
 
 echo "---------------pwd------------" 
 echo "$PWD"
 echo "---------------ll------------" 
-echo "$LL"
+echo "$LS"
 echo "-------------------" 
 
 
@@ -16,7 +17,7 @@ echo "-------------------"
 # Bundle OpenAPI to HTML
 rm index.html
 echo "---------------ll------------" 
-echo "$LL"
+echo "$LS"
 echo "---------------------------" 
 
 
