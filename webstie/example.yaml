@@ -1,0 +1,3719 @@
+openapi: 3.0.0
+info:
+  description: >-
+    Core API Schemas
+  version: 1.0.0
+  title: Core API Schemas
+tags:
+  - name: User(Auth)
+    description: Authentication (Use from User)
+  - name: User(Basic)
+    description: User Information (Use from User)
+  - name: Admin(Master)
+    description: Master data operation. Use from admin system
+  - name: Admin(User)
+    description: User data operation. Use from admin system
+  - name: Admin(AdminUser)
+    description: Manage admin user. Use from admin system
+paths:
+  /api/v1/auth/sign_in:
+    post:
+      summary: "Sign in"
+      description: ""
+      tags:
+        - User(Auth)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  description: "User's email"
+                  example: "user@example.co.jp"
+                password:
+                  type: string
+                  description: "Password"
+                  example: "passwd"
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserDataWithAccessToken'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/auth/jwt:
+    post:
+      summary: "Request to issue a JWT token"
+      description: ""
+      tags:
+        - User(Auth)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - role
+              properties:
+                token:
+                  $ref: '#/components/schemas/ClientToken'
+                role:
+                  type: string
+                  enum:
+                    - signup
+                    - update-email
+                    - reset-password
+                  description: "request role value"
+                  example: "update-email"
+                user_id:
+                  type: integer
+                  description: "Required if role is update-email or reset-password"
+                  example: 1
+
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - access_token
+                    properties:
+                      access_token:
+                        $ref: "#/components/schemas/AccessToken"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/auth/jwt/refresh_token:
+    post:
+      summary: "Refresh JWT token"
+      description: ""
+      tags:
+        - User(Auth)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - refresh_token
+              properties:
+                token:
+                  $ref: '#/components/schemas/ClientToken'
+                refresh_token:
+                  $ref: "#/components/schemas/AccessToken"
+
+
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - access_token
+                      - refresh_token
+                    properties:
+                      access_token:
+                        $ref: "#/components/schemas/AccessToken"
+                      refresh_token:
+                        $ref: "#/components/schemas/RefreshToken"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/:
+    post:
+      summary: "Add new user"
+      description: ""
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - first_name
+                - last_name
+                - last_name_kana
+                - first_name_kana
+                - phone_number
+                - birthday
+                - gender
+                - is_foreign_country
+                - dm_flag
+              properties:
+                email:
+                  $ref: '#/components/schemas/UserEmail'
+                password:
+                  $ref: '#/components/schemas/UserPassword'
+                last_name:
+                  $ref: '#/components/schemas/UserLastName'
+                first_name:
+                  $ref: '#/components/schemas/UserFirstName'
+                last_name_kana:
+                  $ref: '#/components/schemas/UserLastNameKana'
+                first_name_kana:
+                  $ref: '#/components/schemas/UserFirstNameKana'
+                phone_number:
+                  $ref: '#/components/schemas/UserPhoneNumber'
+                birthday:
+                  $ref: '#/components/schemas/UserBirthday'
+                gender:
+                  $ref: '#/components/schemas/UserGender'
+                dm_flag:
+                  $ref: '#/components/schemas/UserDmFlag'
+                is_foreign_country:
+                  $ref: '#/components/schemas/UserIsForeignCountry'
+                country_name:
+                  $ref: '#/components/schemas/UserCountryName'
+                postal_code:
+                  $ref: '#/components/schemas/UserPostalCode'
+                address_prefecture_id:
+                  $ref: '#/components/schemas/UserPrefectureId'
+                address_city_name:
+                  $ref: '#/components/schemas/UserAddressCityName'
+                address_line_1:
+                  $ref: '#/components/schemas/UserAddressLine1'
+                address_line_2:
+                  $ref: '#/components/schemas/UserAddressLine2'
+                foreign_address:
+                  $ref: '#/components/schemas/UserForeignAddress'
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/{userId}:
+    get:
+      summary: "Get user"
+      description: ""
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          example: 1
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserData'
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    put:
+      summary: "Update user"
+      description: ""
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - first_name
+                - last_name
+                - last_name_kana
+                - first_name_kana
+                - phone_number
+                - birthday
+                - gender
+                - dm_flag
+                - is_foreign_country
+              properties:
+                last_name:
+                  $ref: '#/components/schemas/UserLastName'
+                first_name:
+                  $ref: '#/components/schemas/UserFirstName'
+                last_name_kana:
+                  $ref: '#/components/schemas/UserLastNameKana'
+                first_name_kana:
+                  $ref: '#/components/schemas/UserFirstNameKana'
+                phone_number:
+                  $ref: '#/components/schemas/UserPhoneNumber'
+                birthday:
+                  $ref: '#/components/schemas/UserBirthday'
+                gender:
+                  $ref: '#/components/schemas/UserGender'
+                dm_flag:
+                  $ref: '#/components/schemas/UserDmFlag'
+                is_foreign_country:
+                  $ref: '#/components/schemas/UserIsForeignCountry'
+                country_name:
+                  $ref: '#/components/schemas/UserCountryName'
+                postal_code:
+                  $ref: '#/components/schemas/UserPostalCode'
+                address_prefecture_id:
+                  $ref: '#/components/schemas/UserPrefectureId'
+                address_city_name:
+                  $ref: '#/components/schemas/UserAddressCityName'
+                address_line_1:
+                  $ref: '#/components/schemas/UserAddressLine1'
+                address_line_2:
+                  $ref: '#/components/schemas/UserAddressLine2'
+                foreign_address:
+                  $ref: '#/components/schemas/UserForeignAddress'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    delete:
+      summary: "Delete user"
+      description: ""
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: "Success"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/{userId}/password_reset:
+    put:
+      summary: "Reset Password"
+      description: "update user's password"
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+                - password_confirmation
+              properties:
+                password:
+                  $ref: '#/components/schemas/UserPassword'
+                password_confirmation:
+                  type: string
+                  description: "Require same as password"
+                  example: passwd
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/{userId}/email:
+    put:
+      summary: "Update Email"
+      description: "update user's email"
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - email_confirmation
+              properties:
+                email:
+                  $ref: '#/components/schemas/UserEmail'
+                email_confirmation:
+                  type: string
+                  description: "Require same as email"
+                  example: "john@example.com"
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/{userId}/ranks:
+    get:
+      summary: "Get user rank"
+      description: "Can get specified date by 'datetime' param"
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          example: 1
+        - in: query
+          name: datetime
+          schema:
+            type: string
+            format: date-time
+            description: "Specified datetime"
+            example: "2021-01-01 23:59:59"
+          required: false
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserRankData'
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/{userId}/badges:
+    get:
+      summary: "Get User Badge"
+      description: "Can get specified date by 'datetime' param"
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          example: 1
+        - in: query
+          name: datetime
+          schema:
+            type: string
+            format: date-time
+            description: "Specified datetime"
+            example: "2021-01-01 23:59:59"
+          required: false
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - badges
+                      - pagination
+                    properties:
+                      badges:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserBadgeData'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/{userId}/points/:
+    post:
+      summary: "Add points to user"
+      description: ""
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: "Users id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - points
+                - earned_at
+              properties:
+                points:
+                  type: integer
+                  description: "Apply points"
+                  example: 100
+                earned_at:
+                  type: string
+                  format: date-time
+                  description: "points earn datetime"
+                  example: "2021-01-01 23:59:59"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: "#/components/schemas/AddedUserTotalPointData"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/{userId}/points/calculate:
+    post:
+      summary: "Add points to user by amount"
+      description: ""
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: "Users id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - facility_id
+                - earned_at
+              properties:
+                amount:
+                  type: integer
+                  description: "amount of price"
+                  example: 100
+                facility_id:
+                  type: integer
+                  description: "Facility ID"
+                  example: 1
+                earned_at:
+                  type: string
+                  format: date-time
+                  description: "points earn datetime"
+                  example: "2021-01-01 23:59:59"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: "#/components/schemas/AddedUserTotalPointData"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/{userId}/points/use:
+    post:
+      summary: "Use Points"
+      description: ""
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: "Users id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - points
+                - xxx_id
+              properties:
+                points:
+                  type: integer
+                  description: "Points to use"
+                  example: 100
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: "#/components/schemas/UserTotalPointData"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/{userId}/points/total:
+    get:
+      summary: "Get users total points"
+      description: ""
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: "Users id"
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: "#/components/schemas/UserTotalPointData"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/users/{userId}/points/histories:
+    get:
+      summary: "Get point histories"
+      description: ""
+      tags:
+        - User(Basic)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: "Users id"
+        - in: query
+          name: kind
+          schema:
+            type: integer
+            enum:
+              - 1
+              - 2
+          required: true
+          description: |
+            * 1=USED HISTORY,
+            * 2=EARNED HISTORY
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    properties:
+                      histories:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PointGetHistories'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/ranks:
+    get:
+      summary: "[Rank]Get Rank List"
+      description: ''
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+      responses:
+        '200':
+          description: "Rank list"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - ranks
+                      - pagination
+                    properties:
+                      ranks:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RankData'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    post:
+      summary: "[Rank]Create New Rank"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  $ref: "#/components/schemas/RankDisplayName"
+                is_default:
+                  $ref: "#/components/schemas/RankIsDefault"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/RankData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/ranks/{rankId}:
+    put:
+      summary: "[Rank]Update Rank"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: rankId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  $ref: "#/components/schemas/RankDisplayName"
+                is_default:
+                  $ref: "#/components/schemas/RankIsDefault"
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/RankData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    delete:
+      summary: "[Rank]Delete Rank"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: rankId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: "Success"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/badges:
+    get:
+      summary: "[Badge]Get badge list"
+      description: ''
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+      responses:
+        '200':
+          description: "Badge list"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    properties:
+                      badges:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BadgeData'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    post:
+      summary: "[Badge]Create New Badge"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - display_name
+              properties:
+                display_name:
+                  $ref: "#/components/schemas/BadgeDisplayName"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/BadgeData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/badges/{badgeId}:
+    put:
+      summary: "[Badge]Update Badge"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: badgeId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - display_name
+              properties:
+                display_name:
+                  $ref: "#/components/schemas/BadgeDisplayName"
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/BadgeData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    delete:
+      summary: "[Badge]Delete Badge"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: badgeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: "Success"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/facilities:
+    get:
+      summary: "[Facility]Get Facility List"
+      description: ''
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+      responses:
+        '200':
+          description: "Facility list"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - facilities
+                      - pagination
+                    properties:
+                      facilities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FacilityData'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    post:
+      summary: "[Facility]Create New Facility"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - code
+              properties:
+                name:
+                  $ref: "#/components/schemas/FacilityDisplayName"
+                code:
+                  $ref: "#/components/schemas/FacilityCode"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/FacilityData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/facilities/{facilityId}:
+    put:
+      summary: "[Facility]Update Facility"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: facilityId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - code
+              properties:
+                name:
+                  $ref: "#/components/schemas/FacilityDisplayName"
+                code:
+                  $ref: "#/components/schemas/FacilityCode"
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/FacilityData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    delete:
+      summary: "[Facility]Delete Facility"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: facilityId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: "Success"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/points/rates:
+    post:
+      summary: "[Point]Create Facility's Point rate"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - facility_id
+                - rank_id
+                - grant_rate
+                - point_grant_rate_apply_start_at
+                - point_grant_rate_apply_end_at
+              properties:
+                facility_id:
+                  type: integer
+                  description: "Facility ID"
+                  example: 1
+                rank_id:
+                  type: integer
+                  description: "Rank ID"
+                  example: 1
+                grant_rate:
+                  $ref: "#/components/schemas/RankGrantRate"
+                point_grant_rate_apply_start_at:
+                  $ref: "#/components/schemas/RankPointGrantRateApplyStartAt"
+                point_grant_rate_apply_end_at:
+                  $ref: "#/components/schemas/RankPointGrantRateApplyEndAt"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - facility
+                    properties:
+                      facility:
+                        $ref: '#/components/schemas/FacilityData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/points/rates/{pointRateId}:
+    put:
+      summary: "[Point]Update Facility's Point rate"
+      description: "Can be change only dates and grant_rate"
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: pointRateId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - grant_rate
+                - point_grant_rate_apply_start_at
+                - point_grant_rate_apply_end_at
+              properties:
+                grant_rate:
+                  $ref: "#/components/schemas/RankGrantRate"
+                point_grant_rate_apply_start_at:
+                  $ref: "#/components/schemas/RankPointGrantRateApplyStartAt"
+                point_grant_rate_apply_end_at:
+                  $ref: "#/components/schemas/RankPointGrantRateApplyEndAt"
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - facility
+                    properties:
+                      facility:
+                        $ref: '#/components/schemas/FacilityData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    delete:
+      summary: "[Point]Delete Facility's Point rate"
+      description: ""
+      tags:
+        - Admin(Master)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: pointRateId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: "Success"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/users:
+    get:
+      summary: "[User]Get users list"
+      description: ""
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: query
+          name: user_id
+          schema:
+            type: integer
+          required: false
+          description: |
+            exact match.
+            search by user_id
+          example: 1
+        - in: query
+          name: email
+          schema:
+            type: string
+          required: false
+          description: |
+            exact match.
+            search by email
+
+          example: "test@example.com"
+        - in: query
+          name: tel
+          schema:
+            type: string
+          required: false
+          description: |
+            exact match.
+            search by tel
+          example: "0300000000"
+        - in: query
+          name: name
+          schema:
+            type: string
+          required: false
+          description: |
+            partial match.
+            search by name(last_name / first_name / last_name_kana / first_name_kana)
+        - in: query
+          name: registration_from
+          schema:
+            type: string
+            format: date-time
+            example: "2021-01-01 00:00:00"
+          required: false
+          description: "Search by users registartion date. Specify with `registration_to`"
+        - in: query
+          name: registration_to
+          schema:
+            type: string
+            format: date-time
+            example: "2021-01-01 00:00:00"
+          required: false
+          description: "Search by users registartion date. Specify with `registration_from`"
+        - in: query
+          name: updated_from
+          schema:
+            type: string
+            format: date-time
+            example: "2021-01-01 00:00:00"
+          required: false
+          description: "Search by users registartion date. Specify with ` updated_to`"
+        - in: query
+          name: updated_to
+          schema:
+            type: string
+            format: date-time
+            example: "2021-01-01 00:00:00"
+          required: false
+          description: "Search by users registartion date. Specify with `updated_from`"
+      responses:
+        '200':
+          description: "User's Information"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    properties:
+                      users:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserData'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/users/{userId}:
+    get:
+      summary: "Get user detail"
+      description: ""
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          example: 1
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserDataForAdmin'
+
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/users/{userId}/points:
+    post:
+      summary: "[Point]Add points to user"
+      description: |
+        Specification of the expiration date in parameter.<br>
+        If "expiration_at" not in the parameter.
+        Nearest expiration currently valid will be applied.
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: "Users id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - points
+                - earned_at
+              properties:
+                points:
+                  type: integer
+                  description: "Apply points"
+                  example: 100
+                earned_at:
+                  type: string
+                  format: date-time
+                  description: "points earn datetime"
+                  example: "2021-01-01 23:59:59"
+                expiration_at:
+                  type: string
+                  format: date-time
+                  description: "Points expiration datetime"
+                  example: "2021-01-01 23:59:59"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserPointData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/users/{userId}/points/calculate:
+    post:
+      summary: "[Point]Add points to user by amount"
+      description: |
+        Specification of the expiration date in parameter.<br>
+        If "expiration_at" not in the parameter.
+        Nearest expiration currently valid will be applied.
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: "Users id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - facility_id
+                - earned_at
+              properties:
+                amount:
+                  type: integer
+                  description: "amount of price"
+                  example: 100
+                facility_id:
+                  type: integer
+                  description: "Facility ID"
+                  example: 1
+                earned_at:
+                  type: string
+                  format: date-time
+                  description: "points earn datetime"
+                  example: "2021-01-01 23:59:59"
+                expiration_at:
+                  type: string
+                  format: date-time
+                  description: "Points expiration datetime"
+                  example: "2021-01-01 23:59:59"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserPointData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/users/{userId}/points/subtract:
+    post:
+      summary: "[Point]Subtract user points"
+      description: "Existing expirations will not be updated."
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - points
+              properties:
+                points:
+                  type: integer
+                  description: "Subtract points"
+                  example: 100
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - user_total_point
+                    properties:
+                      user_total_point:
+                        $ref: "#/components/schemas/UserTotalPointData"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/users/{userId}/points/histories/{userPointHistoryId}/cancel:
+    post:
+      summary: "[Point]Candel Use of points"
+      description: "Only the use of points can be cancelled"
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: userPointHistoryId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - user_total_point
+                    properties:
+                      user_total_point:
+                        $ref: "#/components/schemas/UserTotalPointData"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/users/{userId}/ranks:
+    get:
+      summary: "[Rank]Get users rank list"
+      description: "Sort by apply_start_at"
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          example: 1
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    properties:
+                      user_ranks:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserRankDataForAdmin'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    post:
+      summary: "[Rank]Add users new rank"
+      description: ""
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rank_id
+                - apply_start_at
+                - apply_end_at
+              properties:
+                rank_id:
+                  type: integer
+                  description: "After rank"
+                  example: 1
+                apply_start_at:
+                  type: string
+                  format: date-time
+                  description: "Apply start datetime"
+                  example: "2021-01-01 23:59:59"
+                apply_end_at:
+                  type: string
+                  format: date-time
+                  description: "Apply end datetime"
+                  example: "2021-01-01 23:59:59"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserRankDataForAdmin'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/users/{userId}/ranks/{userRankId}:
+    put:
+      summary: "[Rank]Update users rank"
+      description: ""
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: userRankId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rank_id
+                - apply_start_at
+                - apply_end_at
+              properties:
+                rank_id:
+                  type: integer
+                  description: "After rank"
+                  example: 1
+                apply_start_at:
+                  type: string
+                  format: date-time
+                  description: "Apply start datetime"
+                  example: "2021-01-01 23:59:59"
+                apply_end_at:
+                  type: string
+                  format: date-time
+                  description: "Apply end datetime"
+                  example: "2021-01-01 23:59:59"
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserRankDataForAdmin'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/users/{userId}/badges:
+    get:
+      summary: "[Badge]Get users badge list"
+      description: ""
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+          example: 1
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    properties:
+                      user_badges:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserBadgeData'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    post:
+      summary: "[Badge]Add users new badge"
+      description: ""
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - badge_id
+                - start_at
+                - expiration_at
+              properties:
+                badge_id:
+                  type: integer
+                  description: Badges id
+                  example: 1
+                start_at:
+                  type: string
+                  format: date-time
+                  description: "Apply start datetime"
+                  example: "2021-01-01 23:59:59"
+                expiration_at:
+                  type: string
+                  format: date-time
+                  description: "Expiration datetime"
+                  example: "2021-01-01 23:59:59"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserBadgeData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/users/{userId}/badges/{badgeId}:
+    put:
+      summary: "[Badge]Update Users Badge"
+      description: ""
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: badgeId
+          schema:
+            type: integer
+          required: true
+          description: "master badge id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - badge_id
+                - start_at
+                - end_at
+              properties:
+                start_at:
+                  type: string
+                  format: date-time
+                  description: "Apply start datetime"
+                end_at:
+                  type: string
+                  format: date-time
+                  description: "Apply end datetime"
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserBadgeData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    delete:
+      summary: "[Badge]Delete Users Badge"
+      description: ""
+      tags:
+        - Admin(User)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: badgeId
+          schema:
+            type: integer
+          required: true
+          description: "master badge id"
+      responses:
+        '204':
+          description: "Success"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/auth/sign_in:
+    post:
+      summary: "Sign in for admin"
+      description: ""
+      tags:
+        - Admin(AdminUser)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  description: "Admin User's email"
+                  example: "admin@example.co.jp"
+                password:
+                  type: string
+                  description: Password
+                  example: passwd
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/AdminUserData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/admin_users:
+    get:
+      summary: "Get admin users list"
+      description: ""
+      tags:
+        - Admin(AdminUser)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: query
+          name: admin_user_id
+          schema:
+            type: integer
+          required: false
+          description: |
+            exact match.
+            search by id
+          example: 1
+
+      responses:
+        '200':
+          description: "get admin useser list"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    properties:
+                      admin_users:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AdminUserData'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    post:
+      summary: "Add new admin user"
+      description: ""
+      tags:
+        - Admin(AdminUser)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - first_name
+                - last_name
+                - role_level
+              properties:
+                email:
+                  $ref: "#/components/schemas/AdminUserEmail"
+                password:
+                  $ref: "#/components/schemas/AdminUserPassword"
+                last_name:
+                  $ref: "#/components/schemas/AdminUserLastName"
+                first_name:
+                  $ref: "#/components/schemas/AdminUserFirstName"
+                role_level:
+                  $ref: "#/components/schemas/AdminUserRoleLevel"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/AdminUserData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /api/v1/admin/admin_users/{adminUserId}:
+    put:
+      summary: "Update admin user"
+      description: ""
+      tags:
+        - Admin(AdminUser)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: adminUserId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - first_name
+                - last_name
+                - role_level
+              properties:
+                email:
+                  type: string
+                  description: email
+                  example: john@example.com
+                last_name:
+                  type: string
+                  description: Last Name
+                  example: Smith
+                first_name:
+                  type: string
+                  description: First Name
+                  example: John
+                password:
+                  type: string
+                  description: update if specified
+                  example: p@ssword
+                role_level:
+                  $ref: "#/components/schemas/AdminUserRoleLevel"
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    $ref: '#/components/schemas/UserData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    delete:
+      summary: "Delete admin user"
+      description: ""
+      tags:
+        - Admin(AdminUser)
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/jwt'
+        - in: path
+          name: adminUserId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: "Success"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '403':
+          $ref: "#/components/responses/403ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+
+components:
+  schemas:
+    ClientToken:
+      type: string
+      maxLength: 255
+      description: "Unique token for client"
+      example: "K7E8QG4WCA"
+    UserDataWithAccessToken:
+      type: object
+      description: "User's Information"
+      required:
+        - user_id
+        - email
+        - password
+        - first_name
+        - last_name
+        - last_name_kana
+        - first_name_kana
+        - phone_number
+        - membership_number
+        - birthday
+        - gender
+        - country_name
+        - is_foreign_country
+        - postal_code
+        - address_prefecture_id
+        - address_city_name
+        - address_line_1
+        - address_line_2
+        - dm_flag
+        - access_token
+        - refresh_token
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          description: "email"
+          example: "john@example.com"
+        last_name:
+          $ref: "#/components/schemas/UserLastName"
+        first_name:
+          $ref: "#/components/schemas/UserFirstName"
+        last_name_kana:
+          $ref: "#/components/schemas/UserLastNameKana"
+        first_name_kana:
+          $ref: "#/components/schemas/UserFirstNameKana"
+        phone_number:
+          $ref: "#/components/schemas/UserPhoneNumber"
+        membership_number:
+          $ref: "#/components/schemas/UserMembershipNumber"
+        birthday:
+          $ref: "#/components/schemas/UserBirthday"
+        gender:
+          $ref: "#/components/schemas/UserGender"
+        is_foreign_country:
+          $ref: "#/components/schemas/UserIsForeignCountry"
+        country_name:
+          $ref: "#/components/schemas/UserCountryName"
+        postal_code:
+          $ref: "#/components/schemas/UserPostalCode"
+        address_prefecture_id:
+          $ref: "#/components/schemas/UserPrefectureId"
+        address_city_name:
+          $ref: "#/components/schemas/UserAddressCityName"
+        address_line_1:
+          $ref: "#/components/schemas/UserAddressLine1"
+        address_line_2:
+          $ref: "#/components/schemas/UserAddressLine2"
+        foreign_address:
+          $ref: "#/components/schemas/UserForeignAddress"
+        dm_flag:
+          $ref: "#/components/schemas/UserDmFlag"
+        access_token:
+          $ref: "#/components/schemas/AccessToken"
+        refresh_token:
+          $ref: "#/components/schemas/RefreshToken"
+    UserData:
+      type: object
+      description: "User's Information"
+      required:
+        - user_id
+        - email
+        - password
+        - first_name
+        - last_name
+        - last_name_kana
+        - first_name_kana
+        - phone_number
+        - membership_number
+        - birthday
+        - gender
+        - country_name
+        - is_foreign_country
+        - postal_code
+        - address_prefecture_id
+        - address_city_name
+        - address_line_1
+        - address_line_2
+        - dm_flag
+        - access_token
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          description: "email"
+          example: "john@example.com"
+        last_name:
+          $ref: "#/components/schemas/UserLastName"
+        first_name:
+          $ref: "#/components/schemas/UserFirstName"
+        last_name_kana:
+          $ref: "#/components/schemas/UserLastNameKana"
+        first_name_kana:
+          $ref: "#/components/schemas/UserFirstNameKana"
+        phone_number:
+          $ref: "#/components/schemas/UserPhoneNumber"
+        membership_number:
+          $ref: "#/components/schemas/UserMembershipNumber"
+        birthday:
+          $ref: "#/components/schemas/UserBirthday"
+        gender:
+          $ref: "#/components/schemas/UserGender"
+        is_foreign_country:
+          $ref: "#/components/schemas/UserIsForeignCountry"
+        country_name:
+          $ref: "#/components/schemas/UserCountryName"
+        postal_code:
+          $ref: "#/components/schemas/UserPostalCode"
+        address_prefecture_id:
+          $ref: "#/components/schemas/UserPrefectureId"
+        address_city_name:
+          $ref: "#/components/schemas/UserAddressCityName"
+        address_line_1:
+          $ref: "#/components/schemas/UserAddressLine1"
+        address_line_2:
+          $ref: "#/components/schemas/UserAddressLine2"
+        foreign_address:
+          $ref: "#/components/schemas/UserForeignAddress"
+        dm_flag:
+          $ref: "#/components/schemas/UserDmFlag"
+    UserDataForAdmin:
+      type: object
+      description: "User's Information"
+      required:
+        - user_id
+        - email
+        - password
+        - first_name
+        - last_name
+        - last_name_kana
+        - first_name_kana
+        - phone_number
+        - membership_number
+        - birthday
+        - gender
+        - country_name
+        - is_foreign_country
+        - postal_code
+        - address_prefecture_id
+        - address_city_name
+        - address_line_1
+        - address_line_2
+        - dm_flag
+        - access_token
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          description: "email"
+          example: "john@example.com"
+        last_name:
+          $ref: "#/components/schemas/UserLastName"
+        first_name:
+          $ref: "#/components/schemas/UserFirstName"
+        last_name_kana:
+          $ref: "#/components/schemas/UserLastNameKana"
+        first_name_kana:
+          $ref: "#/components/schemas/UserFirstNameKana"
+        phone_number:
+          $ref: "#/components/schemas/UserPhoneNumber"
+        membership_number:
+          $ref: "#/components/schemas/UserMembershipNumber"
+        birthday:
+          $ref: "#/components/schemas/UserBirthday"
+        gender:
+          $ref: "#/components/schemas/UserGender"
+        is_foreign_country:
+          $ref: "#/components/schemas/UserIsForeignCountry"
+        country_name:
+          $ref: "#/components/schemas/UserCountryName"
+        postal_code:
+          $ref: "#/components/schemas/UserPostalCode"
+        address_prefecture_id:
+          $ref: "#/components/schemas/UserPrefectureId"
+        address_city_name:
+          $ref: "#/components/schemas/UserAddressCityName"
+        address_line_1:
+          $ref: "#/components/schemas/UserAddressLine1"
+        address_line_2:
+          $ref: "#/components/schemas/UserAddressLine2"
+        foreign_address:
+          $ref: "#/components/schemas/UserForeignAddress"
+        dm_flag:
+          $ref: "#/components/schemas/UserDmFlag"
+        user_points:
+          $ref: "#/components/schemas/UserTotalPointData"
+    UserLastName:
+      type: string
+      maxLength: 255
+      description: "Last Name"
+      example: "Smith"
+    UserFirstName:
+      type: string
+      maxLength: 255
+      description: "First Name"
+      example: "John"
+    UserLastNameKana:
+      type: string
+      maxLength: 255
+      description: "Last Name Kana"
+      example: "スミス"
+    UserFirstNameKana:
+      type: string
+      maxLength: 255
+      description: "First Name Kana"
+      example: "ジョン"
+    UserEmail:
+      type: string
+      description: "email"
+      pattern: '^.+@.+$'
+      maxLength: 255
+      example: "john@example.com"
+    UserPhoneNumber:
+      type: string
+      description: "Phone number. Allow foreign phone number."
+      pattern: '\+?[\d-]$'
+      minLength: 9
+      maxLength: 20
+      example: "+819000000001"
+    UserMembershipNumber:
+      type: string
+      description: "Membership number"
+      example: "ABC0001"
+      maxLength: 255
+    UserBirthday:
+      type: string
+      description: Birthday
+      pattern: '^\d{8}$'
+      example: 20000101
+    UserPassword:
+      type: string
+      minLength: 6
+      maxLength: 72
+      description: "Password"
+      example: "p@ssword"
+    UserGender:
+      type: integer
+      description: "male: 1, female: 2, other: 3"
+      enum:
+        - 1
+        - 2
+        - 3
+      example: 1
+    UserPostalCode:
+      type: string
+      description: "Postal code required: if is_foreign_country is false"
+      pattern: '^\d{7}$'
+      example: 1010001
+    UserPrefectureId:
+      type: integer
+      minimum: 1
+      maximum: 47
+      description: |
+        prefecture id.
+        required if is_foreign_country is false
+    UserAddressCityName:
+      type: string
+      maxLength: 255
+      description: |
+        City name.
+        required if is_foreign_country is false
+      example: "Shinjyuku"
+    UserAddressLine1:
+      type: string
+      maxLength: 255
+      description: |
+        address.
+        required if is_foreign_country is false
+      example: ""
+    UserAddressLine2:
+      type: string
+      maxLength: 255
+      description: |
+        address.
+      example: ""
+    UserCountryName:
+      type: string
+      maxLength: 255
+      description: "required if is_foreign_country is true"
+      example: "Japan"
+    UserForeignAddress:
+      type: string
+      maxLength: 500
+      description: |
+        address.
+        required if is_foreign_country is true
+      example: "Address"
+    UserDmFlag:
+      type: boolean
+      description: "DM等受取同意フラグ"
+      example: false
+    UserIsForeignCountry:
+      type: boolean
+      description: use foreign country addresss
+      example:
+      default: false
+    UserTotalPointData:
+      type: object
+      required:
+        - total_points
+        - current_points
+        - expiration_at
+      properties:
+        total_points:
+          type: integer
+          description: "Total points since Signup"
+          example: 10000
+        current_points:
+          type: integer
+          description: "Usable points"
+          example: 500
+        expiration_at:
+          type: string
+          format: date-time
+          description: "Shortest expiration date"
+          example: "2021-01-01 23:59:59+09:00"
+    AddedUserTotalPointData:
+      type: object
+      required:
+        - added_points
+        - total_points
+        - current_points
+        - expiration_at
+      properties:
+        added_points:
+          type: integer
+          description: "Added points"
+          example: 50
+        total_points:
+          type: integer
+          description: "Total points since Signup"
+          example: 10000
+        current_points:
+          type: integer
+          description: "Usable points"
+          example: 500
+        expiration_at:
+          type: string
+          format: date-time
+          description: "Shortest expiration date"
+          example: "2021-01-01 23:59:59+09:00"
+    UserPointEarnedAt:
+      type: string
+      format: date-time
+      description: "points earn datetime"
+      example: "2021-01-01 23:59:59+09:00"
+    UserPointExpirationAt:
+      type: string
+      format: date-time
+      description: "Expiration datetime"
+      example: "2021-01-01T23:59:59+09:00"
+    UserPointData:
+      type: object
+      required:
+        - earn_points
+        - earned_at
+        - expiration_at
+      properties:
+        user_point_id:
+          type: integer
+          description: "point id"
+          example: 1
+        earn_points:
+          type: integer
+          description: "Earned points"
+          example: 100
+        earned_at:
+          $ref: "#/components/schemas/UserPointEarnedAt"
+        expiration_at:
+          $ref: "#/components/schemas/UserPointExpirationAt"
+        user_total_point:
+          $ref: "#/components/schemas/AddedUserTotalPointData"
+    BadgeData:
+      type: object
+      required:
+        - badge_id
+        - display_name
+      properties:
+        badge_id:
+          type: integer
+          description: "Badge ID"
+          example: 1
+        display_name:
+          $ref: "#/components/schemas/BadgeDisplayName"
+    UserBadgeData:
+      type: object
+      required:
+        - badge_id
+        - display_name
+        - start_at
+        - expiration_at
+      properties:
+        badge_id:
+          type: integer
+          description: "Badge ID"
+          example: 1
+        display_name:
+          $ref: "#/components/schemas/BadgeDisplayName"
+        start_at:
+          type: string
+          format: date-time
+          description: "Apply start datetime"
+          example: "2021-01-01T23:59:59+09:00"
+        expiration_at:
+          type: string
+          format: date-time
+          description: "Expiration datetime"
+          example: "2021-01-01T23:59:59+09:00"
+    RankData:
+      type: object
+      required:
+        - rank_id
+        - display_name
+        - is_default
+        - facilities
+      properties:
+        rank_id:
+          type: integer
+          description: "Rank ID"
+          example: 1
+        display_name:
+          $ref: "#/components/schemas/RankDisplayName"
+        is_default:
+          $ref: "#/components/schemas/RankIsDefault"
+        facilities:
+          type: array
+          description: "Currently Related Facilities"
+          items:
+            $ref: "#/components/schemas/FacilityRankRate"
+    RankDisplayName:
+      type: string
+      description: "Ranks display name"
+      example: "Gold Member"
+      maxLength: 255
+    RankGrantRate:
+      type: integer
+      description: "Specified by Basis point e.g.) 100% = 10000"
+      example: 1000
+      minimum: 0
+      maximum: 10000
+    RankPointGrantRateApplyStartAt:
+      type: string
+      format: date-time
+      description: "Point grant rate Apply start datetime"
+      example: "2021-01-01T00:00:00+09:00"
+    RankPointGrantRateApplyEndAt:
+      type: string
+      format: date-time
+      description: "Point grant rate Apply end datetime"
+      example: "2021-01-01T23:59:59+09:00"
+    RankIsDefault:
+      type: boolean
+      description: |
+        default user rank.
+        Set false if not specified
+      example: false
+    BadgeDisplayName:
+      type: string
+      description: "Badge display name"
+      example: "Use resort facilities"
+      maxLength: 255
+    UserRankDataForAdmin:
+      type: object
+      required:
+        - rank_id
+        - display_name
+        - facilities
+      properties:
+        rank_id:
+          type: integer
+          description: "Ranks ID"
+          example: 1
+        display_name:
+          $ref: "#/components/schemas/RankDisplayName"
+        facilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/FacilityRankRate"
+
+    UserRankData:
+      type: object
+      required:
+        - rank_id
+        - display_name
+        - facility
+      properties:
+        rank_id:
+          type: integer
+          description: "Ranks ID"
+          example: 1
+        display_name:
+          $ref: "#/components/schemas/RankDisplayName"
+        facilities:
+          type: array
+          description: "Current Related Facilities"
+          items:
+            $ref: "#/components/schemas/FacilityRankRate"
+    PointGetHistories:
+      type: array
+      description: points get histories
+      items:
+        type: object
+        required:
+          - diff_points
+          - points
+          - comment
+          - created_at
+          - expiration_at
+          - scheduled_at
+        properties:
+          user_point_history_id:
+            type: integer
+            description: ""
+            example: 1
+          diff_points:
+            type: integer
+            description: ""
+            example: 100
+          reason:
+            type: integer
+            description: |
+              * 1=Use points.
+              * 2=Points earned.
+              * 3=Added by Admin.
+              * 4=Subtracted by Admin.
+              * 5=Not changed by Admin.
+              * 5=Cancel by Admin.
+              * 99=Other.
+            enum:
+              - 1
+              - 2
+              - 3
+              - 4
+              - 5
+              - 6
+              - 99
+            example: 1
+          created_at:
+            type: string
+            format: date-time
+            description: "datetime"
+            example: "2021-01-01T23:59:59+09:00"
+    AdminUserEmail:
+      type: string
+      description: "email"
+      pattern: '^.+@.+$'
+      maxLength: 255
+      example: "john@example.com"
+    AdminUserPassword:
+      type: string
+      description: Password
+      example: p@ssword
+      minLength: 6
+      maxLength: 72
+    AdminUserFirstName:
+      type: string
+      description: First Name
+      example: John
+      maxLength: 255
+    AdminUserLastName:
+      type: string
+      description: Last Name
+      example: Smith
+      maxLength: 255
+    AdminUserData:
+      type: object
+      description: "Admin User's Information"
+      required:
+        - admin_user_id
+        - email
+        - password
+        - first_name
+        - last_name
+        - role_level
+      properties:
+        admin_user_id:
+          type: integer
+          example: 1
+        email:
+          $ref: "#/components/schemas/AdminUserEmail"
+        last_name:
+          type: string
+          description: Last Name
+          example: Smith
+        first_name:
+          type: string
+          description: First Name
+          example: John
+        access_token:
+          $ref: "#/components/schemas/AccessToken"
+        role_level:
+          $ref: "#/components/schemas/AdminUserRoleLevel"
+    AdminUserRoleLevel:
+      type: integer
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+      description: |
+        * 1=Master admin,
+        * 2=Create/Read/Update/Delete Only,
+        * 3=Create/Read/Update Only,
+        * 4=Read Only
+      example: 1
+    FacilityData:
+      type: object
+      required:
+        - facility_id
+        - display_name
+        - code
+        - rank_rates
+      properties:
+        facility_id:
+          type: integer
+          description: "Facility ID"
+          example: 1
+        display_name:
+          $ref: "#/components/schemas/FacilityDisplayName"
+        code:
+          $ref: "#/components/schemas/FacilityCode"
+        rank_rates:
+          type: array
+          items:
+            $ref: "#/components/schemas/RankRate"
+    RankRate:
+      type: object
+      required:
+        - rank_id
+        - grant_rate
+        - apply_start_at
+        - apply_end_at
+      properties:
+        rank_id:
+          type: integer
+          description: "Rank ID"
+          example: 1
+        grant_rate:
+          $ref: "#/components/schemas/RankGrantRate"
+        apply_start_at:
+          $ref: "#/components/schemas/RankPointGrantRateApplyStartAt"
+        apply_end_at:
+          $ref: "#/components/schemas/RankPointGrantRateApplyEndAt"
+    FacilityDisplayName:
+      type: string
+      description: "Facility display name"
+      example: "Shop"
+      maxLength: 255
+    FacilityCode:
+      type: string
+      description: "Facility code"
+      example: "1234"
+      maxLength: 255
+    FacilityRankRate:
+      type: object
+      required:
+        - facility_id
+        - grant_rate
+        - apply_start_at
+        - apply_end_at
+      properties:
+        facility_id:
+          type: integer
+          description: "Facility ID"
+          example: 1
+        grant_rate:
+          $ref: "#/components/schemas/RankGrantRate"
+        apply_start_at:
+          $ref: "#/components/schemas/RankPointGrantRateApplyStartAt"
+        apply_end_at:
+          $ref: "#/components/schemas/RankPointGrantRateApplyEndAt"
+    Pagination:
+      type: object
+      description: "pagination"
+      required:
+        - total_count
+        - current_page
+        - per_page
+        - is_last_page
+      properties:
+        total_count:
+          type: integer
+          description: ""
+          example: 150
+        current_page:
+          type: integer
+          description: ""
+          example: 1
+        per_page:
+          type: integer
+          description: ""
+          example: 50
+        is_last_page:
+          type: boolean
+          description: ""
+          example: true
+    AccessToken:
+      type: string
+      description: |
+        Encoded JWT
+        {
+          "user_kind": "user",
+          "role": "full-access",
+          "user_id": "1",
+          "exp": 1619599650,
+          "tenant": "rcloud"
+          "azp": ""
+        }
+      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    RefreshToken:
+      type: string
+      description: |
+        Encoded JWT
+        {
+          "user_kind": "user",
+          "role": "full-access",
+          "user_id": "1",
+          "exp": 1619599650,
+          "tenant": "rcloud"
+          "azp": "",
+          "is_refresh": 1
+        }
+      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJ0ZXN0IjoiaGVsbG8ifQ.-psa3s7sQWvbV2bUgH2G0s76jLLaLD8B2qOJB7fhl3k"
+    BadRequestErrorCode:
+      type: string
+      example: "200X"
+      enum:
+        - "200X"
+    UnauthorizedErrorCode:
+      type: string
+      example: "200X"
+      enum:
+        - "200X"
+    ForbiddenErrorCode:
+      type: string
+      example: "200X"
+      enum:
+        - "200X"
+    NotFoundErrorCode:
+      type: string
+      example: "200X"
+      enum:
+        - "200X"
+    ServerErrorErrorCode:
+      type: string
+      example: "200X"
+      enum:
+        - "200X"
+  parameters:
+    tenant:
+      name: "AUTHORIZATION_CLIENT"
+      in: header
+      description: "Tenant name"
+      required: true
+      schema:
+        type: string
+      example: rcourd
+    jwt:
+      name: "Authorization Bearer"
+      in: header
+      description: "JWT Token"
+      required: true
+      schema:
+        type: string
+      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+  responses:
+    400ResponseCode:
+      description: "Bad Request Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/BadRequestErrorCode'
+              error_msg:
+                type: string
+                description: "Error Message"
+                example: "Message"
+    401ResponseCode:
+      description: "Unauthorized Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/UnauthorizedErrorCode'
+              error_msg:
+                type: string
+                description: "Error Message"
+                example: "Message"
+    403ResponseCode:
+      description: "Forbidden Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/ForbiddenErrorCode'
+              error_msg:
+                type: string
+                description: "Error Message"
+                example: "Message"
+    404ResponseCode:
+      description: "Not Found Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/NotFoundErrorCode'
+              error_msg:
+                type: string
+                description: "Error Message"
+                example: "Message"
+    500ResponseCode:
+      description: "Server Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/ServerErrorErrorCode'
+              error_msg:
+                type: string
+                description: "Error Message"
+                example: "Message"

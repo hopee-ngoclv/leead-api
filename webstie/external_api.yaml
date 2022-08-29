@@ -1,0 +1,2811 @@
+openapi: 3.0.0
+info:
+  description: >-
+    外部システムに利用提供するAPI
+  version: 1.0.0
+  title: 外部向けAPI(external interface)
+tags:
+  - name: 認証
+    description: 認証関連
+  - name: 会員
+    description: 会員の管理
+  - name: ポイント
+    description: ポイントの管理
+  - name: キャンペーン
+    description: キャンペーンの管理
+  - name: 施設・店舗
+    description: 施設および店舗の管理
+  - name: その他
+    description: その他情報管理
+paths:
+  /exif/api/v1/users/sign_in:
+    post:
+      summary: "[RC-API-1-01] ログイン"
+      description: 会員番号、パスワードを受け付け、ログイン認証処理を行う
+      tags:
+        - 認証
+      parameters:
+        - $ref: '#/components/parameters/externalAPIToken'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - membership_number
+                - password
+              properties:
+                membership_number:
+                  type: string
+                  minLength: 16
+                  maxLength: 16
+                  description: 会員番号
+                  example: "1123000123456789"
+                password:
+                  type: string
+                  minimum: 1
+                  description: パスワード
+                  example: p@assword
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - user
+                      - access_token
+                      - access_token_expired_at
+                      - refresh_token
+                      - refresh_token_expired_at
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      access_token:
+                        $ref: '#/components/schemas/AccessToken'
+                      access_token_expired_at:
+                        type: string
+                        format: date-time
+                        description: 有効期限
+                        example: 2021/10/01 10:00:00
+                      refresh_token:
+                        $ref: '#/components/schemas/RefreshToken'
+                      refresh_token_expired_at:
+                        type: string
+                        format: date-time
+                        description: 有効期限
+                        example: 2021/10/01 10:00:00
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          description: Unauthorized Error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - error_code
+                  - error_msg
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  timestamp:
+                    type: integer
+                    description: "unixtime"
+                    example: 1621912345
+                  error_code:
+                    $ref: '#/components/schemas/UnauthorizedErrorCode'
+                  error_msg:
+                    anyOf:
+                      - $ref: '#/components/schemas/InvalidApiToken'
+                      - $ref: '#/components/schemas/NotValidEmailOrPassword'
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users/{membership_number}/tripla/settings:
+    get:
+      summary: "[RC-API-1-02] 宿泊予約サイト（トリプラ）向け認証キー取得"
+      description: 会員番号を受け付け、宿泊予約サイト（トリプラ）向け認証キーを返却する
+      tags:
+        - 認証
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    $ref: '#/components/schemas/TriplaAccessKey'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/auth/token_refresh:
+    post:
+      summary: "[RC-API-1-03] トークンリフレッシュ"
+      description: "リフレッシュトークンを受け付け、JWTトークンのリフレッシュ処理を行う"
+      tags:
+        - 認証
+      parameters:
+        - $ref: '#/components/parameters/externalAPIToken'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  $ref: "#/components/schemas/RefreshToken"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - user
+                      - access_token
+                      - access_token_expired_at
+                      - refresh_token
+                      - refresh_token_expired_at
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      access_token:
+                        $ref: '#/components/schemas/AccessToken'
+                      access_token_expired_at:
+                        type: string
+                        format: date-time
+                        description: 有効期限
+                        example: 2021/10/01 10:00:00
+                      refresh_token:
+                        $ref: '#/components/schemas/RefreshToken'
+                      refresh_token_expired_at:
+                        type: string
+                        format: date-time
+                        description: 有効期限
+                        example: '2021/10/01 10:00:00'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          description: Unauthorized Error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - error_code
+                  - error_msg
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  timestamp:
+                    type: integer
+                    description: "unixtime"
+                    example: 1621912345
+                  error_code:
+                    $ref: '#/components/schemas/UnauthorizedErrorCode'
+                  error_msg:
+                    anyOf:
+                      - $ref: '#/components/schemas/InvalidApiToken'
+                      - $ref: '#/components/schemas/InvalidRefreshToken'
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users:
+    post:
+      summary: "[RC-API-2-01] 会員登録"
+      description: 登録項目に従い、会員の新規登録処理を行う
+      tags:
+        - 会員
+      parameters:
+        - $ref: '#/components/parameters/externalAPIToken'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - last_name
+                - first_name
+                - last_name_kana
+                - first_name_kana
+                - email
+                - phone_number
+                - birthday
+                - gender
+                - is_foreign_country
+                - country_name
+                - mail_delivery_flag
+                - password
+                - password_confirmation
+              properties:
+                last_name:
+                  type: string
+                  maxLength: 255
+                  description: 姓
+                  example: 佐藤
+                first_name:
+                  type: string
+                  maxLength: 255
+                  description: 名
+                  example: 一郎
+                last_name_kana:
+                  type: string
+                  maxLength: 255
+                  description: 姓（カナ）
+                  example: サトウ
+                first_name_kana:
+                  type: string
+                  maxLength: 255
+                  description: 名（カナ）
+                  example: イチロウ
+                email:
+                  type: string
+                  pattern: '^.+@.+\..+$'
+                  maxLength: 255
+                  description: メールアドレス
+                  example: user@example.com
+                phone_number:
+                  type: string
+                  pattern: '^\+?\d{9,20}$'
+                  description: |
+                    電話番号<br>
+                    アプリ上 9桁〜20桁で制御、先頭1桁に+を許容
+                  example: "09012345678"
+                birthday:
+                  type: string
+                  pattern: '^\d{8}$'
+                  description: |
+                    誕生日<br>
+                    YYYYMMDD形式
+                  example: "19800401"
+                gender:
+                  $ref: '#/components/schemas/UserGender'
+                is_foreign_country:
+                  type: string
+                  maxLength: 1
+                  description: |
+                    外国住所フラグ<br>
+                    デフォルト：0（国内）、1（海外）
+                  example: "1"
+                postal_code:
+                  type: string
+                  nullable: true
+                  pattern: '^\d{7}$'
+                  description: |
+                    (国内)郵便番号<br>
+                    -(ハイフン)なし<br>
+                    <font color="red">※is_foreign_country=0(国内)の場合のみ必須</font>
+                  example: "5430001"
+                address_prefecture_id:
+                  type: integer
+                  nullable: true
+                  minimum: 1
+                  maximum: 47
+                  description: |
+                    (国内)都道府県番号<br>
+                    <font color="red">※is_foreign_country=0(国内)の場合のみ必須</font>
+                  example: 1
+                address_city_name:
+                  type: string
+                  nullable: true
+                  maxLength: 255
+                  description: |
+                    (国内)市区町村<br>
+                    <font color="red">※is_foreign_country=0(国内)の場合のみ必須</font>
+                  example: "天王寺区"
+                address_line_1:
+                  type: string
+                  nullable: true
+                  maxLength: 255
+                  description: (国内)番地・建物名
+                  example: "上本町６丁目１−５５"
+                address_line_2:
+                  type: string
+                  nullable: true
+                  maxLength: 255
+                  description: (国内)その他
+                  example: ""
+                country_name:
+                  type: string
+                  nullable: true
+                  maxLength: 255
+                  description: 国
+                  example: ""
+                foreign_address:
+                  type: string
+                  nullable: true
+                  maxLength: 500
+                  description: |
+                    海外の住所<br>
+                    外国居住者の場合のみ記載
+                  example: ""
+                mail_delivery_flag:
+                  type: boolean
+                  description: |
+                    メール発信区分<br>
+                    デフォルト：false（不要）、true（要）
+                  example: true
+                password:
+                  type: string
+                  minimum: 1
+                  description: パスワード
+                  example: "p@assword"
+                password_confirmation:
+                  type: string
+                  description: |
+                    パスワード（確認用）<br>
+                    パラメータpasswordと一致していない場合はエラーとなる
+                  example: "p@ssword"
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - user
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users/{membership_number}:
+    get:
+      summary: "[RC-API-2-04] 会員詳細取得"
+      description: 会員情報の詳細情報を返却する
+      tags:
+        - 会員
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    description: 会員の詳細情報
+                    required:
+                      - user
+                      - current_rank
+                      - user_points
+                      - present_term
+                      - next_rank
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      current_rank:
+                        $ref: '#/components/schemas/Rank'
+                      user_points:
+                        $ref: '#/components/schemas/UserPoints'
+                      present_term:
+                        $ref: '#/components/schemas/PresentTerm'
+                      next_rank:
+                        type: object
+                        nullable: true
+                        description: |
+                          次のランクアップ条件<br>
+                          上位ランクが無い場合はnull
+                        required:
+                          - rank_data
+                          - required_nights_stayed
+                          - required_usage_amount
+                        properties:
+                          rank_data:
+                            $ref: '#/components/schemas/Rank'
+                          required_nights_stayed:
+                            type: integer
+                            minimum: 0
+                            description: ランクアップに必要な残り宿泊数
+                            example: 1
+                          required_usage_amount:
+                            type: integer
+                            minimum: 0
+                            description: ランクアップに必要な残り利用金額
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    put:
+      summary: "[RC-API-2-02] 会員更新"
+      description: 更新項目に従い、会員の更新処理を行う
+      tags:
+        - 会員
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - last_name
+                - first_name
+                - last_name_kana
+                - first_name_kana
+                - email
+                - phone_number
+                - birthday
+                - gender
+                - is_foreign_country
+                - country_name
+                - mail_delivery_flag
+              properties:
+                last_name:
+                  type: string
+                  maxLength: 255
+                  description: 姓
+                  example: 佐藤
+                first_name:
+                  type: string
+                  maxLength: 255
+                  description: 名
+                  example: 一郎
+                last_name_kana:
+                  type: string
+                  maxLength: 255
+                  description: 姓（カナ）
+                  example: サトウ
+                first_name_kana:
+                  type: string
+                  maxLength: 255
+                  description: 名（カナ）
+                  example: イチロウ
+                email:
+                  type: string
+                  pattern: '^.+@.+\..+$'
+                  maxLength: 255
+                  description: メールアドレス
+                  example: user@example.com
+                phone_number:
+                  type: string
+                  pattern: '^\+?\d{9,20}$'
+                  description: |
+                    電話番号<br>
+                    アプリ上 9桁〜20桁で制御、先頭1桁に+を許容
+                  example: "09012345678"
+                birthday:
+                  type: string
+                  pattern: '^\d{8}$'
+                  description: |
+                    誕生日<br>
+                    YYYYMMDD形式
+                  example: "19800401"
+                gender:
+                  $ref: '#/components/schemas/UserGender'
+                is_foreign_country:
+                  type: string
+                  maxLength: 1
+                  description: |
+                    外国住所フラグ<br>
+                    デフォルト：0（国内）、1（海外）
+                  example: false
+                postal_code:
+                  type: string
+                  nullable: true
+                  pattern: '^\d{7}$'
+                  description: |
+                    (国内)郵便番号<br>
+                    -(ハイフン)なし<br>
+                    <font color="red">※is_foreign_country=0(国内)の場合のみ必須</font>
+                  example: "5430001"
+                address_prefecture_id:
+                  type: integer
+                  nullable: true
+                  minimum: 1
+                  maximum: 47
+                  description: |
+                    (国内)都道府県番号<br>
+                    <font color="red">※is_foreign_country=0(国内)の場合のみ必須</font>
+                  example: 1
+                address_city_name:
+                  type: string
+                  nullable: true
+                  maxLength: 255
+                  description: |
+                    (国内)市区町村<br>
+                    <font color="red">※is_foreign_country=0(国内)の場合のみ必須</font>
+                  example: "天王寺区"
+                address_line_1:
+                  type: string
+                  nullable: true
+                  maxLength: 255
+                  description: (国内)番地・建物名
+                  example: "上本町６丁目１−５５"
+                address_line_2:
+                  type: string
+                  nullable: true
+                  maxLength: 255
+                  description: (国内)その他
+                  example: ""
+                country_name:
+                  type: string
+                  nullable: true
+                  maxLength: 255
+                  description: 国
+                  example: ""
+                foreign_address:
+                  type: string
+                  nullable: true
+                  maxLength: 500
+                  description: |
+                    海外の住所<br>
+                    外国居住者の場合のみ記載
+                  example: ""
+                mail_delivery_flag:
+                  type: boolean
+                  description: |
+                    メール発信区分<br>
+                    デフォルト：false（不要）、true（要）
+                  example: true
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - user
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    delete:
+      summary: "[RC-API-2-05] 会員削除（退会）"
+      description: 会員の削除（退会）処理を行う
+      tags:
+        - 会員
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users/{membership_number}/password:
+    put:
+      summary: "[RC-API-2-06] パスワード変更"
+      description: |
+        会員番号、現在のパスワード、変更後のパスワードを受け付け、変更後のパスワードへの更新処理を行う
+      tags:
+        - 会員
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - current_password
+                - new_password
+                - new_password_confirmation
+              properties:
+                current_password:
+                  type: string
+                  description: 現在のパスワード
+                  example: p@ssword
+                new_password:
+                  type: string
+                  minLength: 6
+                  maxLength: 72
+                  description: 変更後のパスワード
+                  example: newp@ssword
+                new_password_confirmation:
+                  type: string
+                  description: |
+                    変更後のパスワード（確認用）<br>
+                    パラメータnew_passwordと一致していない場合はエラーとなる
+                  example: newp@ssword
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - user
+                      - access_token
+                      - access_token_expired_at
+                      - refresh_token
+                      - refresh_token_expired_at
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      access_token:
+                        $ref: '#/components/schemas/AccessToken'
+                      access_token_expired_at:
+                        type: string
+                        format: date-time
+                        description: 有効期限
+                        example: 2021/10/01 10:00:00
+                      refresh_token:
+                        $ref: '#/components/schemas/RefreshToken'
+                      refresh_token_expired_at:
+                        type: string
+                        format: date-time
+                        description: 有効期限
+                        example: '2021/10/01 10:00:00'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users/{membership_number}/email:
+    put:
+      summary: "[RC-API-2-03] メール更新"
+      description: 会員番号、変更後のメールアドレスを受け付け、メールアドレスの更新処理を行う
+      tags:
+        - 会員
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  $ref: '#/components/schemas/UserEmail'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users/{membership_number}/points/use:
+    post:
+      summary: "[RC-API-3-01] ポイント利用"
+      description: |
+        利用ポイント数を受け付け、ポイント減算処理を行う<br>
+        ポイント利用時は有効期限が近い保有ポイントから減算をする
+      tags:
+        - ポイント
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dry-run
+                - points
+              properties:
+                dry-run:
+                  type: boolean
+                  description: |
+                    ポイント利用のdry-run<br>
+                    trueの場合は実際のポイント利用を行わずに、確定後の情報が返却される。
+                points:
+                  type: integer
+                  minimum: 1
+                  description: 利用ポイント数
+                  example: 100
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - is_dry-run
+                      - user_points
+                      - used_points
+                    properties:
+                      is_dry-run:
+                        type: boolean
+                        description: dry-runによるリクエストを受け付けた場合はtrue
+                      user_points:
+                        $ref: '#/components/schemas/UserPoints'
+                      used_points:
+                        type: integer
+                        description: 利用ポイント数
+                        example: 100
+
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users/{membership_number}/points/grant:
+    post:
+      summary: "[RC-API-3-02] ポイント付与"
+      description: 付与ポイント数を受け付け、ポイント付与処理を行う
+      tags:
+        - ポイント
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dry-run
+                - points
+              properties:
+                dry-run:
+                  type: boolean
+                  description: |
+                    ポイント付与のdry-run<br>
+                    trueの場合は実際のポイント付与を行わずに、確定後の情報が返却される。
+                points:
+                  type: integer
+                  minimum: 1
+                  description: 付与する通常ポイント数
+                  example: 100
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - is_dry-run
+                      - user_points
+                      - added_points
+                    properties:
+                      is_dry-run:
+                        type: boolean
+                        description: dry-runによるリクエストを受け付けた場合はtrue
+                      user_points:
+                        $ref: '#/components/schemas/UserPoints'
+                      added_points:
+                        type: integer
+                        description: 付与ポイント数
+                        example: 100
+
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users/{membership_number}/points:
+    get:
+      summary: "[RC-API-3-03] ポイント数取得"
+      description: |
+        保有ポイント数、累積ポイント数を返却する
+        また、有効期限毎にポイント数とその有効期限もわかるようにする
+      tags:
+        - ポイント
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    description: 会員のポイント情報
+                    required:
+                      - user_points
+                    properties:
+                      user_points:
+                        $ref: '#/components/schemas/UserPoints'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users/{membership_number}/points/histories:
+    get:
+      summary: "[RC-API-3-04] ポイント履歴一覧取得"
+      description: 参照対象年を受け付け、ポイント履歴一覧情報を返却する
+      tags:
+        - ポイント
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+        - in: query
+          name: year
+          schema:
+            type: integer
+            example: 2020
+          required: true
+          description: 指定年度
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - year
+                      - histories
+                      - pagination
+                    properties:
+                      year:
+                        type: integer
+                        description: 指定年度
+                        example: 2020
+                      histories:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PointHistory'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users/{membership_number}/points/grant/calculate:
+    post:
+      summary: "[RC-API-3-06] ポイント付与（金額ベース）"
+      description: 売上金額を受け付け、ポイント付与処理を行う
+      tags:
+        - ポイント
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dry-run
+                - amount
+                - is_reduced_tax
+                - notes
+                - apply_date
+                - facility_id
+              properties:
+                dry-run:
+                  type: boolean
+                  description: |
+                    ポイント付与のdry-run<br>
+                    trueの場合は実際のポイント付与を行わずに、確定後の情報が返却される。
+                amount:
+                  type: integer
+                  minimum: 1
+                  description: 売上金額（税込）
+                  example: 1
+                is_reduced_tax:
+                  type: boolean
+                  description: |
+                    軽減税率対象<br>
+                    amountに含まれる消費税額が軽減税率対象であるか
+                nights_stayed:
+                  type: integer
+                  nullable: true
+                  minimum: 0
+                  description: 宿泊日数入力（フロントのみ）
+                  example: 1
+                notes:
+                  type: string
+                  minLength: 0
+                  maxLength: 100
+                  description: |
+                    特記事項<br>
+                    特別な対応等をした場合に特記事項が入力される
+                apply_date:
+                  type: string
+                  pattern: '^\d{4}\/\d{2}\/\d{2}$'
+                  description: 取引の追加対象となる日付
+                  example: "2021/10/01"
+                facility_id:
+                  type: integer
+                  minimum: 1
+                  description: 施設・店舗ID
+                  example: 1
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    description: |
+                      キャンペーンが適用される場合、通常ポイント付与分とキャンペーンによるポイント付与分は分離した形でレスポンスされる。<br>
+                      ※通常付与率1% / キャンペーン付与率5%の場合は、付与されるポイント総数は5%分（1%+5%で6%ではない）となり、
+                       1%分は通常付与扱い、4%分にキャンペーン付与扱いとなる。<br><br>
+                       ただし、キャンペーンポイントが固定値で登録されている場合のポイント総数は、通常ポイント付与率により算出したものと、とキャンペーンポイントの合算値となる
+                    required:
+                      - is_dry-run
+                      - user_points
+                      - added_points
+                    properties:
+                      is_dry-run:
+                        type: boolean
+                        description: dry-runによるリクエストを受け付けた場合はtrue
+                      user_points:
+                        $ref: '#/components/schemas/UserPoints'
+                      added_points:
+                        type: object
+                        required:
+                          - amount
+                          - point_grant_rate
+                          - added_points
+                          - is_reduced_tax
+                          - notes
+                          - includes_campaign_points
+                        properties:
+                          amount:
+                            type: integer
+                            minimum: 1
+                            description: 売上金額（税込）
+                            example: 1000
+                          point_grant_rate:
+                            type: number
+                            description: 現在のランクによる通常ポイント付与率
+                            example: 1.5
+                          added_points:
+                            type: integer
+                            minimum: 1
+                            description: |
+                              付与ポイント数<br>
+                              ※キャンペーン適用時は通常ポイント付与率適用分のみとなる
+                            example: 300
+                          is_reduced_tax:
+                            type: boolean
+                            description: 軽減税率対象
+                          notes:
+                            type: string
+                            minLength: 0
+                            maxLength: 100
+                            description: 特記事項
+                          includes_campaign_points:
+                            type: object
+                            description: 適用されたキャンペーン情報
+                            required:
+                              - campaign
+                            properties:
+                              campaign:
+                                type: object
+                                nullable: true
+                                required:
+                                  - id
+                                  - name
+                                  - point_grant_rate
+                                  - expired_at
+                                  - period
+                                  - added_points
+                                properties:
+                                  id:
+                                    type: integer
+                                    minimum: 1
+                                    example: 1
+                                    description: キャンペーンID
+                                  name:
+                                    type: string
+                                    minLength: 1
+                                    maxLength: 255
+                                    example: ポイント2倍キャンペーン
+                                    description: キャンペーン名
+                                  point_grant_rate:
+                                    type: number
+                                    description: |
+                                      キャンペーンのポイント付与率<br>
+                                      キャンペーン適用時はこちらの付与率のみが適用される。
+                                    example: 3.5
+                                  expired_at:
+                                    type: string
+                                    format: date-time
+                                    description: |
+                                      ポイント有効期限<br>
+                                      キャンペーンのポイント付与率から通常のポイント付与率分を差し引いたポイントにのみ適用される。
+                                    example: 2021/10/01 10:00:00
+                                  period:
+                                    type: object
+                                    description: キャンペーン開催期間
+                                    required:
+                                      - start_at
+                                      - end_at
+                                    properties:
+                                      start_at:
+                                        type: string
+                                        format: date-time
+                                        description: 開始日
+                                        example: 2021/10/01 10:00:00
+                                      end_at:
+                                        type: string
+                                        format: date-time
+                                        description: 終了日
+                                        example: 2021/10/01 10:00:00
+                                  added_points:
+                                    type: integer
+                                    minimum: 1
+                                    description: |
+                                      キャンペーンによる付与ポイント数<br>
+                                      ※通常ポイント付与率による適用分は含まない
+                                    example: 300
+
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/campaigns:
+    get:
+      summary: "[RC-API-4-01] キャンペーン一覧取得"
+      description: キャンペーンの一覧を返却する
+      tags:
+        - キャンペーン
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - in: query
+          name: facility_id
+          schema:
+            type: integer
+            example: 1
+          required: true
+          description: |
+            施設・店舗ID<br>
+            施設IDを指定した場合は施設に紐づく店舗のキャンペーン情報も返却される
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - campaigns
+                      - pagination
+                    properties:
+                      campaigns:
+                        type: array
+                        description: |
+                          facilitiesがnullの場合は全店舗を対象としたキャンペーン
+                        items:
+                          $ref: '#/components/schemas/Campaign'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/campaigns/{campaign_id}:
+    get:
+      summary: "[RC-API-4-02] キャンペーン詳細取得"
+      description: キャンペーンの詳細情報を返却する
+      tags:
+        - キャンペーン
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - in: path
+          name: campaign_id
+          description: キャンペーンID
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - campaign
+                    properties:
+                      campaign:
+                        $ref: '#/components/schemas/Campaign'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCodeAuthed"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/facilities:
+    get:
+      summary: "[RC-API-6-01] 施設・店舗一覧取得"
+      description: 施設および店舗の一覧を返却する
+      tags:
+        - 施設・店舗
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - in: query
+          name: parent_facility_code
+          schema:
+            type: string
+            nullable: true
+          required: true
+          example: front
+          description: |
+            親施設コード<br>
+            ※null指定の場合は親施設を持たない店舗の一覧を取得
+        - in: query
+          name: area_id
+          schema:
+            type: integer
+          required: false
+          example: 1
+          description: エリアID
+        - in: query
+          name: only_favorite
+          schema:
+            type: boolean
+          required: false
+          example: false
+          description: |
+            お気に入り指定した施設・店舗のみを取得する場合に指定<br>
+            falseを指定した場合はお気に入り状態でのフィルタリングを行わない。
+        - in: query
+          name: kind
+          schema:
+            type: integer
+          required: false
+          example: 1
+          description: "店舗種別の指定"
+        - in: query
+          name: find_all
+          schema:
+            type: boolean
+          required: false
+          example: false
+          description: |
+            施設・店舗を全件取得するオプション<br>
+            ページネーション向けのパラメータと併用された場合はfind_allパラメータを優先とする。
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - area
+                      - parent_facility
+                      - facilities
+                      - pagination
+                    properties:
+                      area:
+                        type: object
+                        description: エリア情報（エリア指定無しの場合はnull）
+                        nullable: true
+                        required:
+                          - id
+                          - name
+                        properties:
+                          id:
+                            type: integer
+                            description: エリアID
+                            example: 1
+                          name:
+                            type: string
+                            description: エリア名
+                            example: "関東"
+                      parent_facility:
+                        $ref: '#/components/schemas/Facility'
+                      facilities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Facility'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/users/{membership_number}/facilities/{facility_id}/favorites:
+    post:
+      summary: "[RC-API-6-02] お気に入り施設登録"
+      description: 施設IDを受け付け、お気に入りを登録する
+      tags:
+        - 施設・店舗
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+        - in: path
+          name: facility_id
+          schema:
+            type: integer
+            example: 1
+          required: true
+          description: |
+            施設ID<br>
+            ※店舗は指定不可
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+    delete:
+      summary: "[RC-API-6-03] お気に入り施設削除"
+      description: 施設IDを受け付け施設IDを受け付け、お気に入りを削除する
+      tags:
+        - 施設・店舗
+      parameters:
+        - $ref: '#/components/parameters/externalAPITokenWithJwt'
+        - $ref: '#/components/parameters/membershipNumber'
+        - in: path
+          name: facility_id
+          schema:
+            type: integer
+            example: 1
+          required: true
+          description: |
+            施設ID<br>
+            ※店舗は指定不可
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/areas:
+    get:
+      summary: "[RC-API-6-04] エリア一覧取得"
+      description: エリアの一覧を返却する
+      tags:
+        - 施設・店舗
+      parameters:
+        - $ref: '#/components/parameters/externalAPIToken'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - areas
+                    properties:
+                      areas:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Area'
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /exif/api/v1/prefectures:
+    get:
+      summary: "[RC-API-5-01] 都道府県マスタ一覧取得"
+      description: 都道府県の一覧取得
+      tags:
+        - その他
+      parameters:
+        - $ref: '#/components/parameters/externalAPIToken'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - prefectures
+                    properties:
+                      prefectures:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Prefecture'
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+components:
+  schemas:
+    Pagination:
+      type: object
+      description: "pagination"
+      required:
+        - total_count
+        - current_page
+        - per_page
+        - is_last_page
+      properties:
+        total_count:
+          type: integer
+          minimum: 0
+          description: ""
+          example: 150
+        current_page:
+          type: integer
+          minimum: 1
+          description: ""
+          example: 1
+        per_page:
+          type: integer
+          minimum: 1
+          description: ""
+          example: 50
+        is_last_page:
+          type: boolean
+          description: ""
+          example: true
+    AccessToken:
+      type: string
+      description: |
+        Encoded JWT
+      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    RefreshToken:
+      type: string
+      description: |
+        Encoded JWT
+      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJ0ZXN0IjoiaGVsbG8ifQ.-psa3s7sQWvbV2bUgH2G0s76jLLaLD8B2qOJB7fhl3k"
+    Prefecture:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          maximum: 47
+          description: id
+          example: 1
+        name:
+          type: string
+          description: 都道府県名
+          example: 東京都
+    Area:
+      type: object
+      description: エリア情報
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          description: エリアID
+          example: 1
+        name:
+          type: string
+          description: エリア名
+          example: "関東"
+    Rank:
+      type: object
+      required:
+        - id
+        - name
+        - condition_data
+        #        - point_grant_rate
+        - is_auto_rank_down
+        - is_default_rank
+        - points_condition
+      properties:
+        id:
+          type: integer
+          description: ランクIDを
+          example: 1
+        name:
+          type: string
+          description: ランク名
+          example: ゴールド
+        condition_data:
+          type: object
+          required:
+            - minimum_nights_stayed
+            - minimum_usage_amount
+          properties:
+            minimum_nights_stayed:
+              type: integer
+              minimum: 0
+              description: 累積宿泊数の下限
+              example: 1
+            minimum_usage_amount:
+              type: integer
+              minimum: 0
+              description: 累積利用額の下限
+              example: 1
+        is_auto_rank_down:
+          type: boolean
+          description: 自動ランクダウン
+          example: false
+        is_default_rank:
+          type: boolean
+          description: 会員のデフォルトランク
+          example: true
+        points_condition:
+          type: object
+          required:
+            - point_grant_rate
+            - with_expiry
+            - points_days_valid
+          properties:
+            point_grant_rate:
+              type: number
+              description: ポイント付与率
+              example: 1.5
+            with_expiry:
+              type: boolean
+              description: 有効期限有無
+              example: true
+            points_days_valid:
+              type: integer
+              nullable: true
+              description: ポイント有効日数
+              example: 730
+    Campaign:
+      type: object
+      required:
+        - id
+        - parent_facility
+        - facilities
+        - name
+        - period
+        - kind
+        - burden_rate
+        - updated_at
+        - expired_at
+        - description
+      properties:
+        id:
+          type: integer
+          description: キャンペーンID
+          example: 1
+        parent_facility:
+          $ref: '#/components/schemas/FacilityNullable'
+        facilities:
+          type: array
+          nullable: true
+          description: |
+            対象の店舗一覧<br>
+            nullの場合は店舗を指定せず全店舗を対象とする
+          items:
+            $ref: '#/components/schemas/Facility'
+        name:
+          type: string
+          maxLength: 255
+          description: キャンペーン名
+          example: 新規登録キャンペーン
+        period:
+          type: object
+          description: キャンペーン開催期間
+          required:
+            - start_at
+            - end_at
+          properties:
+            start_at:
+              type: string
+              format: date-time
+              description: 開始日
+              example: 2021/10/01 10:00:00
+            end_at:
+              type: string
+              format: date-time
+              description: 終了日
+              example: 2021/10/01 10:00:00
+        kind:
+          type: integer
+          nullable: true
+          enum:
+            - 1
+            - 2
+            - 3
+          description: |
+            キャンペーン種別<br>
+            1: 付与倍率<br>
+            2: 固定付与（1回）<br>
+            3: 固定付与（毎回）
+          example: 1
+        point_grant_rate:
+          type: number
+          minimum: 0.1
+          description: |
+            ポイント付与率<br>
+            kindが1の場合は必須
+          example: 3.5
+        point_grant_value:
+          type: integer
+          minimum: 1
+          description: |
+            付与数<br>
+            kindが2または3の場合は必須
+          example: 100
+        burden_rate:
+          type: object
+          description: 負担率（%）
+          required:
+            - hotel
+            - head_office
+          properties:
+            hotel:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: |
+                ホテルの負担率(%)<br>
+                本部の負担率との合計値が100でない場合はバリデーションエラー
+              example: 50
+            head_office:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: |
+                本部の負担率(%)<br>
+                ホテルの負担率との合計値が100でない場合はバリデーションエラー
+              example: 50
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: 2021/10/01 10:00:00
+        expired_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: ポイント有効期限
+          example: 2021/10/01 10:00:00
+        description:
+          type: string
+          minLength: 0
+          maxLength: 500100
+          description: キャンペーン詳細
+          example: 新規登録に適用されるキャンペーン
+    UserPoints:
+      type: object
+      required:
+        - total_points
+        - current_points
+        - expiration_list
+      properties:
+        total_points:
+          type: integer
+          description: 通算獲得ポイント数
+          example: 1000
+        current_points:
+          type: integer
+          description: 現在保有しているポイント数
+          example: 150
+        expiration_list:
+          type: array
+          description: |
+            有効期限が近い順にソートされた配列<br>
+            expired_atがnullの場合は有効期限無し
+          items:
+            type: object
+            required:
+              - points
+              - expired_at
+            properties:
+              points:
+                type: integer
+                description: ポイント数
+                example: 100
+              expired_at:
+                type: string
+                nullable: true
+                format: date-time
+                description: 有効期限日時
+                example: 2021/10/01 10:00:00
+    PointHistory:
+      type: object
+      description: ポイント履歴
+      required:
+        - id
+        - registered_at
+        - points
+        - amount
+        - expired_at
+        - is_reduced_tax
+        - reason_kind
+        - reason_text
+        - nights_stayed
+        - facility
+        - notes
+        - revision_note
+        - last_updated_at
+        - campaign
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          description: ポイント履歴ID
+          example: 1
+        registered_at:
+          type: string
+          format: date-time
+          description: 登録日時
+          example: 2021/10/01 10:00:00
+        points:
+          type: integer
+          description: ポイント増減数
+          example: 100
+        amount:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: |
+            売上金額（税込）
+            獲得ポイント履歴の場合のみ
+          example: 1
+        expired_at:
+          type: string
+          nullable: true
+          format: date-time
+          description: ポイント有効期限
+          example: 2021/10/01 10:00:00
+        is_reduced_tax:
+          type: boolean
+          nullable: true
+          description: |
+            軽減税率対象
+            獲得ポイント履歴の場合のみ
+        reason_kind:
+          type: integer
+          minimum: 1
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 99
+          description: |
+            ポイント増減の理由（種別）<br>
+            1: USED 2: EARNED, 3: EDIT, 4: EXPIRED, 5: DELETED, 6: JOINED, 7: REISSUE, 99: OTHER
+          example: 1
+        reason_text:
+          type: string
+          minLength: 0
+          maxLength: 255
+          description: ポイント増減の理由（テキスト）
+          example: 売上ポイント
+        nights_stayed:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: 宿泊日数入力（フロントのみ）
+          example: 1
+        facility:
+          $ref: "#/components/schemas/FacilityIncludeParentNullable"
+        notes:
+          type: string
+          nullable: true
+          minLength: 0
+          maxLength: 100
+          description: 特記事項
+          example: xxx
+        revision_note:
+          type: string
+          nullable: true
+          description: 修正理由
+          maxLength: 100
+          example: yyy
+        last_updated_at:
+          type: string
+          format: date-time
+          description: 修正日時
+          example: 2021/10/01 10:00:00
+        campaign:
+          type: object
+          nullable: true
+          required:
+            - id
+            - name
+          properties:
+            id:
+              type: integer
+              minimum: 1
+              example: 1
+              description: キャンペーンID
+            name:
+              type: string
+              minLength: 1
+              maxLength: 255
+              example: ポイント2倍キャンペーン
+              description: キャンペーン名
+    PresentTerm:
+      type: object
+      required:
+        - total_used_amount
+        - total_nights_stayed
+      properties:
+        total_used_amount:
+          type: integer
+          minimum: 0
+          description: 今期累計利用額
+          example: 100000
+        total_nights_stayed:
+          type: integer
+          minimum: 0
+          description: 今期累計宿泊数
+          example: 10
+    TriplaAccessKey:
+      type: object
+      description: 外部連携向けの情報
+      required:
+        - tripla
+      properties:
+        tripla:
+          type: object
+          description: トリプラ向け
+          required:
+            - access_key
+          properties:
+            access_key:
+              type: string
+              description: アクセスキー
+              example: "qwertyuiop"
+    User:
+      type: object
+      description: 会員情報
+      required:
+        - membership_number
+        - last_name
+        - first_name
+        - last_name_kana
+        - first_name_kana
+        - gender
+        - birthday
+        - postal_code
+        - email
+        - is_foreign_country
+        - phone_number
+        - mail_delivery_flag
+        - created_at
+        - updated_at
+        - entered_at
+      properties:
+        membership_number:
+          $ref: "#/components/schemas/MembershipNumber"
+        last_name:
+          type: string
+          maxLength: 255
+          description: 姓
+          example: 千代田
+        first_name:
+          type: string
+          maxLength: 255
+          description: 名
+          example: 太郎
+        last_name_kana:
+          type: string
+          maxLength: 255
+          description: 姓（カナ）
+          example: チヨダ
+        first_name_kana:
+          type: string
+          maxLength: 255
+          description: 名（カナ）
+          example: タロウ
+        gender:
+          $ref: '#/components/schemas/UserGender'
+        birthday:
+          type: string
+          pattern: '^\d{8}$'
+          description: |
+            誕生日<br>
+            YYYYMMDD形式
+          example: "19800401"
+        email:
+          $ref: '#/components/schemas/UserEmail'
+        postal_code:
+          type: string
+          nullable: true
+          pattern: '^\d{7}$'
+          description: |
+            (国内)郵便番号<br>
+            -(ハイフン)なし
+          example: "1000001"
+        address_prefecture_id:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 47
+          description: (国内)都道府県番号
+          example: 12
+        address_city_name:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: (国内)市区町村
+          example: 千代田区
+        address_line_1:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: (国内)番地・建物名
+          example: 千代田1
+        address_line_2:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: (国内)その他
+          example: 千代田ビル12階
+        country_name:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: 国
+          example: 日本
+        is_foreign_country:
+          type: string
+          maxLength: 1
+          description: |
+            外国住所フラグ<br>
+            デフォルト：0（国内）、1（海外）
+          example: "0"
+        foreign_address:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: |
+            海外の住所<br>
+            外国居住者の場合のみ記載
+          example:
+        phone_number:
+          type: string
+          pattern: '^\+?\d{9,20}$'
+          description: |
+            電話番号<br>
+            アプリ上 9桁〜20桁で制御、先頭1桁に+を許容
+          example: 09000123456
+        mail_delivery_flag:
+          type: boolean
+          description: |
+            メール発信区分<br>
+            デフォルト：false（不要）、true（要）
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: 登録日時
+          example: 2021/10/01 10:00:00
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: 2021/10/01 10:00:00
+        entered_at:
+          type: string
+          format: date-time
+          description: |
+            入会日<br>
+            会員の入会日が登録される
+            （新プラスチックカード会員の場合、登録日時≠入会日の想定）
+          example: 2021/10/01 10:00:00
+    UserGender:
+      type: integer
+      default: 4
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+      description: |
+        性別<br>
+        male: 1, female: 2, other: 3, unselected: 4
+      example: 1
+    UserEmail:
+      type: string
+      pattern: '^.+@.+\..+$'
+      maxLength: 255
+      description: メールアドレス
+      example: user@example.com
+    Facility:
+      type: object
+      description: 施設店舗情報
+      required:
+        - id
+        - name
+        - code
+        - kind
+      properties:
+        id:
+          type: integer
+          description: 施設ID
+          example: 1
+        name:
+          $ref: "#/components/schemas/FacilityName"
+        code:
+          $ref: "#/components/schemas/FacilityCode"
+        kind:
+          $ref: "#/components/schemas/FacilityKind"
+    FacilityNullable:
+      type: object
+      nullable: true
+      description: 施設店舗情報 parent_facilityの場合はnullable
+      required:
+        - id
+        - name
+        - code
+        - kind
+      properties:
+        id:
+          type: integer
+          description: 施設ID
+          example: 1
+        name:
+          $ref: "#/components/schemas/FacilityName"
+        code:
+          $ref: "#/components/schemas/FacilityCode"
+        kind:
+          $ref: "#/components/schemas/FacilityKind"
+    FacilityIncludeParent:
+      type: object
+      description: 施設情報（親施設を含める）
+      required:
+        - id
+        - name
+        - code
+        - kind
+        - address
+        - phone_number
+        - fax_number
+        - email
+        - parent
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          description: 施設ID
+          example: 1
+        name:
+          $ref: "#/components/schemas/FacilityName"
+        code:
+          $ref: "#/components/schemas/FacilityCode"
+        kind:
+          $ref: "#/components/schemas/FacilityKind"
+        address:
+          $ref: "#/components/schemas/FacilityAddress"
+        phone_number:
+          $ref: "#/components/schemas/FacilityPhoneNumber"
+        fax_number:
+          $ref: "#/components/schemas/FacilityFaxNumber"
+        email:
+          $ref: "#/components/schemas/FacilityEmail"
+        parent:
+          $ref: "#/components/schemas/Facility"
+    FacilityIncludeParentNullable:
+      type: object
+      nullable: true
+      description: 施設情報（親施設を含める）
+      required:
+        - id
+        - name
+        - code
+        - kind
+        - address
+        - phone_number
+        - fax_number
+        - email
+        - parent
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          description: 施設ID
+          example: 1
+        name:
+          $ref: "#/components/schemas/FacilityName"
+        code:
+          $ref: "#/components/schemas/FacilityCode"
+        kind:
+          $ref: "#/components/schemas/FacilityKind"
+        address:
+          $ref: "#/components/schemas/FacilityAddress"
+        phone_number:
+          $ref: "#/components/schemas/FacilityPhoneNumber"
+        fax_number:
+          $ref: "#/components/schemas/FacilityFaxNumber"
+        email:
+          $ref: "#/components/schemas/FacilityEmail"
+        parent:
+          $ref: "#/components/schemas/Facility"
+    FacilityName:
+      type: string
+      description: 施設・店舗名
+      example: ホテル大阪
+      minLength: 1
+      maxLength: 255
+    FacilityCode:
+      type: string
+      description: 施設コード
+      example: "1234"
+      minLength: 1
+      maxLength: 255
+    FacilityKind:
+      type: integer
+      description: |
+        種別<br>
+        1: ホテル<br>
+        2: 受付フロント
+      example: 1
+    FacilityAddress:
+      type: object
+      description: 住所情報
+      required:
+        - postal_code
+        - prefecture
+        - city_name
+        - address_line_1
+        - address_line_2
+      properties:
+        postal_code:
+          type: string
+          nullable: true
+          pattern: '^\d{7}$'
+          description: |
+            郵便番号<br>
+            -(ハイフン)なし
+          example: "5430001"
+        prefecture:
+          nullable: true
+          $ref: "#/components/schemas/Prefecture"
+        city_name:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: 市区町村
+          example: 天王寺区
+        address_line_1:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: 番地・建物名
+          example: 上本町６丁目１−５５
+        address_line_2:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: その他
+          example:
+    FacilityPhoneNumber:
+      type: string
+      pattern: '^\+?\d{9,20}$'
+      nullable: true
+      description: |
+        電話番号<br>
+        アプリ上 9桁〜20桁で制御、先頭1桁に+を許容
+      example: "09012345678"
+    FacilityFaxNumber:
+      type: string
+      nullable: true
+      pattern: '^\+?\d{9,20}$'
+      description: |
+        FAX番号<br>
+        アプリ上 9桁〜20桁で制御、先頭1桁に+を許容
+      example: "09012345678"
+    FacilityEmail:
+      type: string
+      pattern: '^.+@.+\..+$'
+      maxLength: 255
+      nullable: true
+      description: メールアドレス
+      example: user@example.com
+    RegisteredFacilityIncludeParent:
+      type: object
+      nullable: true
+      description: |
+        登録施設/店舗情報（親施設を含める）<br>
+        店舗操作の場合、登録した店舗の店舗マスタIDが保存される。<br>
+        管理ウェブから登録された場合はnullが設定される。
+      required:
+        - id
+        - name
+        - code
+        - kind
+        - address
+        - phone_number
+        - fax_number
+        - email
+        - parent
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          description: 施設ID
+          example: 1
+        name:
+          $ref: "#/components/schemas/FacilityName"
+        code:
+          $ref: "#/components/schemas/FacilityCode"
+        kind:
+          $ref: "#/components/schemas/FacilityKind"
+        address:
+          $ref: "#/components/schemas/FacilityAddress"
+        phone_number:
+          $ref: "#/components/schemas/FacilityPhoneNumber"
+        fax_number:
+          $ref: "#/components/schemas/FacilityFaxNumber"
+        email:
+          $ref: "#/components/schemas/FacilityEmail"
+        parent:
+          $ref: "#/components/schemas/Facility"
+    MembershipNumber:
+      type: string
+      minLength: 16
+      maxLength: 16
+      description: 会員番号
+      example: "1123000123456789"
+    BadRequestErrorCode:
+      type: string
+      description: 別途エラーコード表にて定義
+      example: "200X"
+      enum:
+        - "200X"
+    UnauthorizedErrorCode:
+      type: string
+      description: 別途エラーコード表にて定義
+      example: "200X"
+      enum:
+        - "200X"
+    ForbiddenErrorCode:
+      type: string
+      description: 別途エラーコード表にて定義
+      example: "200X"
+      enum:
+        - "200X"
+    NotFoundErrorCode:
+      type: string
+      description: 別途エラーコード表にて定義
+      example: "200X"
+      enum:
+        - "200X"
+    ServerErrorErrorCode:
+      type: string
+      description: 別途エラーコード表にて定義
+      example: "200X"
+      enum:
+        - "200X"
+    NotValidEmailOrPassword:
+      type: string
+      description: ログイン認証エラー
+      example: ログインに失敗しました
+    InvalidApiToken:
+      type: string
+      description: APIトークンエラー
+      example: 有効なAPIトークンではありません
+    InvalidAccessToken:
+      type: string
+      description: アクセストークンエラー
+      example: "有効なアクセストークンではありません"
+    InvalidRefreshToken:
+      type: string
+      description: リフレッシュトークンエラー
+      example: "有効なリフレッシュトークンではありません"
+    InvalidEmailVerifycationCodeSpecified:
+      type: string
+      description: |
+        無効なメール認証コードが指定された場合<br>
+      example: 有効な認証コードではありません
+    InvalidPasswordResetAuthCodeSpecified:
+      type: string
+      description: |
+        無効なパスワード再設定用の認証コードが指定された場合<br>
+      example: 有効な認証コードではありません
+    InvalidPasswordResetTokenSpecified:
+      type: string
+      description: 無効なパスワード再設定用のトークンが指定された場合
+      example: 有効なトークンではありません
+    InvalidParameter:
+      type: string
+      description: バリデーション要件を満たしていないパラメータを受け付けた場合
+      example: XXXは必須です
+    InvalidVerifycationCodeSpecified:
+      type: string
+      description: 認証コードが不正
+      example: 正しい認証コードを入力してください
+  parameters:
+    perPage:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        default: 50
+      description: ページサイズ
+      example: 50
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+      description: ページ番号
+      example: 1
+    userId:
+      in: path
+      name: user_id
+      description: 会員ID
+      example: 1
+      required: true
+      schema:
+        type: string
+        minimum: 1
+    jwt:
+      name: "Authorization"
+      in: header
+      description: "JWT Token"
+      required: true
+      schema:
+        type: string
+      example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    externalAPIToken:
+      name: "Authorization"
+      in: header
+      description: APIトークン
+      required: true
+      schema:
+        type: string
+      example: token 8743b52063cd84097a65d1633f5c74f5
+    externalAPITokenWithJwt:
+      name: "Authorization"
+      in: header
+      description: APIトークンとJWTトークン（カンマ区切り）
+      required: true
+      schema:
+        type: string
+      example: |
+        token 8743b52063cd84097a65d1633f5c74f5, Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+    membershipNumber:
+      in: path
+      name: membership_number
+      description: 会員番号
+      required: true
+      schema:
+        type: string
+      example: "1123000123456789"
+  responses:
+    400ResponseCode:
+      description: Bad Request Error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/BadRequestErrorCode'
+              error_msg:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameter'
+    401ResponseCode:
+      description: Unauthorized Error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/UnauthorizedErrorCode'
+              error_msg:
+                $ref: '#/components/schemas/InvalidApiToken'
+    401ResponseCodeAuthed:
+      description: Unauthorized Error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/UnauthorizedErrorCode'
+              error_msg:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidApiToken'
+                  - $ref: '#/components/schemas/InvalidAccessToken'
+    403ResponseCode:
+      description: Forbidden Error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/ForbiddenErrorCode'
+              error_msg:
+                type: string
+                description: Error Message
+                example: Message
+    404ResponseCode:
+      description: Not Found Error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/NotFoundErrorCode'
+              error_msg:
+                type: string
+                description: 指定のリソースが存在しない場合
+                example: XXXが見つかりません
+    500ResponseCode:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/ServerErrorErrorCode'
+              error_msg:
+                type: string
+                description: |
+                  APIサーバー側で問題が発生している場合
+                example: エラーが発生しました

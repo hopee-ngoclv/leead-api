@@ -1,0 +1,1746 @@
+openapi: 3.0.0
+info:
+  description: >-
+    クライアントアプリ向けのAPI
+  version: 1.0.0
+  title: クライアントアプリAPI
+tags:
+  - name: 認証
+    description: JWTの取得
+  - name: 施設・店舗
+    description: 施設および店舗の管理
+  - name: 会員情報
+    description: 会員の管理
+  - name: ポイント
+    description: ポイントの管理
+  - name: クーポン
+    description: クーポンの管理
+paths:
+  /client/api/v1/staff/sign_in:
+    post:
+      summary: 自動認証（スタッフログイン）
+      description: 店舗、スタッフの情報を受け付け、ログイン処理を行う
+      tags:
+        - 認証
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - staff_id
+              properties:
+                staff_id:
+                  type: integer
+                  minimum: 1
+                  description: スタッフID
+                  example: 1
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: "result"
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: "current timestamp"
+                  payload:
+                    type: object
+                    required:
+                      - staff
+                      - facility
+                    properties:
+                      staff:
+                        $ref: '#/components/schemas/StaffData'
+                      facility:
+                        $ref: '#/components/schemas/FacilityDataIncludeParent'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /client/api/v1/facilities:
+    get:
+      summary: 施設・店舗一覧取得
+      description: 施設および店舗の一覧を返却する
+      tags:
+        - 施設・店舗
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/staff'
+        - in: query
+          name: parent_facility_code
+          schema:
+            type: string
+            example: front
+          required: true
+          example: front
+          description: |
+            親施設コード<br>
+            ※指定しない場合は親施設を持たない施設の一覧を取得
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+        - in: query
+          name: find_all
+          schema:
+            type: boolean
+          required: false
+          example: false
+          description: |
+            施設・店舗を全件取得するオプション<br>
+            ページネーション向けのパラメータと併用された場合はfind_allパラメータを優先とする。
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - parent_facility
+                      - facilities
+                      - pagination
+                    properties:
+                      parent_facility:
+                        nullable: true
+                        $ref: '#/components/schemas/FacilityData'
+                      facilities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FacilityData'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /client/api/v1/facilities/{facility_id}/staffs:
+    get:
+      summary: 店舗スタッフ一覧取得
+      description: 店舗IDを受け付け、店舗に紐づくスタッフの一覧を返却する
+      tags:
+        - 施設・店舗
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/staff'
+        - in: path
+          name: facility_id
+          schema:
+            type: string
+            minimum: 1
+            example: 1
+          required: true
+          description: 施設・店舗ID
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+        - in: query
+          name: find_all
+          schema:
+            type: boolean
+          required: false
+          example: false
+          description: |
+            施設・店舗を全件取得するオプション<br>
+            ページネーション向けのパラメータと併用された場合はfind_allパラメータを優先とする。
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - facility
+                      - staffs
+                      - pagination
+                    properties:
+                      facility:
+                        $ref: '#/components/schemas/FacilityData'
+                      staffs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/StaffData'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /client/api/v1/users:
+    get:
+      summary: 会員一覧取得
+      description: |
+        検索項目に従い、該当する会員情報の一覧を返却する<br>
+        ・各項目のAND条件での検索となる。<br>
+        ・全ての項目を前方一致とし、返却レコード数の件数上限（50件まで等）をかけることとする。<br>上限件数を超えた場合は、検索項目を絞り込むようにエラーアラートを返却する。
+      tags:
+        - 会員情報
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/staffRequired'
+        - in: query
+          name: membership_number
+          schema:
+            type: string
+            example: 255
+          required: false
+          description: 会員番号
+        - in: query
+          name: username_kana
+          schema:
+            type: string
+            example: 1
+          required: false
+          description: 会員名（カナ）
+        - in: query
+          name: email
+          schema:
+            type: string
+            example: 1
+          required: false
+          description: メールアドレス
+        - in: query
+          name: phone_number
+          schema:
+            type: string
+            example: 1
+          required: false
+          description: 電話番号
+        - in: query
+          name: postal_code
+          schema:
+            type: string
+            pattern: '^\d{7}$'
+            example: 1
+          required: false
+          description: |
+            (国内)郵便番号<br>
+            -(ハイフン)なし
+        - in: query
+          name: system_type
+          schema:
+            type: integer
+            enum:
+              - 1
+              - 2
+            example: 1
+          required: true
+          description: |
+            会員名新旧区分<br>
+            新システム=1, 旧システム=2
+
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - users
+                    properties:
+                      is_search_limit_error:
+                        type: boolean
+                        description: 検索件数上限エラー（絞り込み条件の追加が必要）
+                        example: false
+                      users:
+                        type: array
+                        description: |
+                          ・各項目のAND条件での検索となる。<br>
+                          ・全ての項目を前方一致とし、返却レコード数の件数上限（50件まで等）をかけることとする。上限件数を超えた場合は、検索項目を絞り込むようにエラーアラートを返却する。
+                        items:
+                          type: object
+                          description: 会員情報
+                          required:
+                            - id
+                            - membership_number
+                            - last_name_kana
+                            - first_name_kana
+                            - email
+                            - phone_number
+                            - postal_code
+                            - birthday
+                          properties:
+                            id:
+                              $ref: '#/components/schemas/UserId'
+                            membership_number:
+                              $ref: "#/components/schemas/MembershipNumber"
+                            last_name_kana:
+                              type: string
+                              maxLength: 255
+                              description: 姓（カナ）
+                              example: スズキ
+                            first_name_kana:
+                              type: string
+                              maxLength: 255
+                              description: 名（カナ）
+                              example: イチロウ
+                            email:
+                              type: string
+                              pattern: '^.+@.+\..+$'
+                              maxLength: 255
+                              description: メールアドレス
+                              example: user@example.com
+                            phone_number:
+                              type: string
+                              pattern: '^\+?\d{9,20}$'
+                              description: |
+                                電話番号<br>
+                                アプリ上 9桁〜20桁で制御、先頭1桁に+を許容
+                              example: "08012345678"
+                            postal_code:
+                              type: string
+                              nullable: true
+                              pattern: '^\d{7}$'
+                              description: |
+                                (国内)郵便番号<br>
+                                -(ハイフン)なし
+                              example: "1010001"
+                            birthday:
+                              type: string
+                              pattern: '^\d{8}$'
+                              description: |
+                                誕生日<br>
+                                YYYYMMDD形式
+                              example: "19930101"
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /client/api/v1/users/membership_number/{membership_number}:
+    get:
+      summary: 会員詳細取得
+      description: 会員番号を受け付け、特定の会員情報の詳細情報を返却する
+      tags:
+        - 会員情報
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/staffRequired'
+        - in: path
+          name: membership_number
+          schema:
+            type: string
+            maxLength: 255
+            example: 1
+          required: true
+          description: 会員番号
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    description: |
+                      ランク情報を返す<br>
+                      次ランクアップまでの利用額/宿泊数も含まれる
+                    required:
+                      - user
+                      - user_points
+                      - current_rank_data
+                      - present_term_data
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/UserData'
+                      user_points:
+                        $ref: '#/components/schemas/UserPoints'
+                      current_rank_data:
+                        $ref: '#/components/schemas/RankData'
+                      present_term_data:
+                        $ref: '#/components/schemas/PresentTermData'
+                      next_rank_data:
+                        type: object
+                        nullable: true
+                        description: |
+                          次のランクアップ条件<br>
+                          上位ランクが無い場合はnull
+                        required:
+                          - rank_data
+                          - required_nights_stayed
+                          - required_usage_amount
+                        properties:
+                          rank_data:
+                            $ref: '#/components/schemas/RankData'
+                          required_nights_stayed:
+                            type: integer
+                            minimum: 0
+                            description: ランクアップに必要な残り宿泊数
+                            example: 1
+                          required_usage_amount:
+                            type: integer
+                            minimum: 0
+                            description: ランクアップに必要な残り利用金額
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /client/api/v1/users/relocate:
+    post:
+      summary: 会員付替
+      description: 付替元の会員番号と付替先の会員番号を受け付け、会員の付替処理を行う
+      tags:
+        - 会員情報
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/staffRequired'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - old_membership_number
+                - new_membership_number
+
+              properties:
+                old_membership_number:
+                  type: string
+                  pattern: '^\d{16}$'
+                  description: |
+                    付替元の会員番号<br>
+                    新旧システムの会員番号はいずれも指定可能
+                  example: 0123456789123456
+                new_membership_number:
+                  type: string
+                  pattern: '^\d{1,255}$'
+                  description: |
+                    付替先の会員番号<br>
+                    新システムの会員番号のみ
+                  example: 1123456789
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - old_membership_number
+                      - new_membership_number
+                    properties:
+                      old_membership_number:
+                        $ref: '#/components/schemas/MembershipNumber'
+                      new_membership_number:
+                        $ref: '#/components/schemas/MembershipNumber'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /client/api/v1/users/{user_id}/points/add/calculate:
+    post:
+      summary: ポイント付与（金額ベース）
+      description: 会員番号を受け付け売上金額を受け付け、ポイント付与処理を行う
+      tags:
+        - ポイント
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/staffRequired'
+        - $ref: '#/components/parameters/userId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dry-run
+                - amount
+                - is_reduced_tax
+                - notes
+              properties:
+                dry-run:
+                  type: boolean
+                  description: |
+                    ポイント付与のdry-run<br>
+                    trueの場合は実際のポイント付与を行わずに、確定後の情報が返却される。
+                amount:
+                  type: integer
+                  minimum: 1
+                  description: 売上金額（税込）
+                  example: 1
+                is_reduced_tax:
+                  type: boolean
+                  description: |
+                    軽減税率対象<br>
+                    amountに含まれる消費税額が軽減税率対象であるか
+                nights_stayed:
+                  type: integer
+                  nullable: true
+                  minimum: 0
+                  description: 宿泊日数入力（フロントのみ）
+                  example: 1
+                notes:
+                  type: string
+                  minLength: 0
+                  maxLength: 100
+                  description: |
+                    特記事項<br>
+                    特別な対応等をした場合に特記事項が入力される
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    description: |
+                      ・キャンペーン期間によるポイント付与が処理される場合は、通常ポイント付与とキャンペーンによるポイント付与がそれぞれ処理されていることがわかる情報を返却する。
+                    required:
+                      - is_dry-run
+                      - user_points
+                      - added_points
+                    properties:
+                      is_dry-run:
+                        type: boolean
+                        description: dry-runによるリクエストを受け付けた場合はtrue
+                      user_points:
+                        $ref: '#/components/schemas/UserPoints'
+                      added_points:
+                        type: object
+                        required:
+                          - amount
+                          - point_grant_rate
+                          - added_points
+                          - is_reduced_tax
+                          - notes
+                          - includes_campaign_points
+                        properties:
+                          amount:
+                            type: integer
+                            minimum: 1
+                            description: 売上金額（税込）
+                            example: 1000
+                          point_grant_rate:
+                            type: number
+                            description: ポイント付与率
+                            example: 1.5
+                          added_points:
+                            type: integer
+                            minimum: 1
+                            description: |
+                              付与ポイント数<br>
+                              ※適用されたキャンペーン獲得分は含まれない
+                            example: 300
+                          is_reduced_tax:
+                            type: boolean
+                            description: 軽減税率対象
+                          nights_stayed:
+                            type: integer
+                            nullable: true
+                            minimum: 0
+                            description: （フロントのみ）
+                            example: 5
+                          notes:
+                            type: string
+                            minLength: 0
+                            maxLength: 100
+                            description: 特記事項
+                          includes_campaign_points:
+                            type: object
+                            description: 適用されたキャンペーン情報
+                            required:
+                              - campaign
+                            properties:
+                              campaign:
+                                type: object
+                                nullable: true
+                                required:
+                                  - id
+                                  - name
+                                  - point_grant_rate
+                                  - expired_at
+                                  - period
+                                  - added_points
+                                properties:
+                                  id:
+                                    type: integer
+                                    minimum: 1
+                                    example: 1
+                                    description: キャンペーンID
+                                  name:
+                                    type: string
+                                    minLength: 1
+                                    maxLength: 255
+                                    example: ポイント2倍キャンペーン
+                                    description: キャンペーン名
+                                  point_grant_rate:
+                                    type: number
+                                    description: ポイント付与率
+                                    example: 3.5
+                                  expired_at:
+                                    type: string
+                                    format: date-time
+                                    description: ポイント有効期限
+                                    example: 2021/10/01 10:00:00
+                                  period:
+                                    type: object
+                                    description: キャンペーン開催期間
+                                    required:
+                                      - start_at
+                                      - end_at
+                                    properties:
+                                      start_at:
+                                        type: string
+                                        format: date-time
+                                        description: 開始日
+                                        example: 2021/10/01 10:00:00
+                                      end_at:
+                                        type: string
+                                        format: date-time
+                                        description: 終了日
+                                        example: 2021/10/01 10:00:00
+                                  added_points:
+                                    type: integer
+                                    minimum: 1
+                                    description: キャンペーンによる付与ポイント数
+                                    example: 300
+
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /client/api/v1/users/{user_id}/points/subtract:
+    post:
+      summary: ポイント減算
+      description: 利用ポイント数を受け付け、ポイント減算処理を行う
+      tags:
+        - ポイント
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/staffRequired'
+        - $ref: '#/components/parameters/userId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - points
+              properties:
+                points:
+                  type: integer
+                  minimum: 1
+                  description: 利用ポイント数
+                  example: 100
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - subtract_points
+                      - user_points
+                    properties:
+                      subtract_points:
+                        type: integer
+                        description: 減算ポイント数
+                        example: 100
+                      user_points:
+                        $ref: '#/components/schemas/UserPoints'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /client/api/v1/users/{user_id}/points/histories:
+    get:
+      summary: ポイント履歴一覧取得
+      description: 参照対象年度（4月～3月）を受け付け、ポイント履歴一覧情報を返却する
+      tags:
+        - ポイント
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/staffRequired'
+        - $ref: '#/components/parameters/userId'
+        - in: query
+          name: year
+          schema:
+            type: integer
+            example: 2020
+          required: true
+          description: 指定年度
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - histories
+                      - pagination
+                    properties:
+                      histories:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PointHistoryData'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /client/api/v1/users/{user_id}/coupons/code/{coupon_code}:
+    get:
+      summary: クーポン情報取得
+      description: 会員番号を受け付けクーポンIDを受け付け、クーポン情報を返却する
+      tags:
+        - クーポン
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/staffRequired'
+        - $ref: '#/components/parameters/userId'
+        - in: path
+          name: coupon_code
+          schema:
+            type: string
+            example: cpn001
+          required: true
+          description: クーポンコード
+      responses:
+        '200':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - coupon_data
+                    properties:
+                      coupon_data:
+                        $ref: '#/components/schemas/CouponData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+  /client/api/v1/users/{user_id}/coupons/code/{coupon_code}/use:
+    post:
+      summary: クーポン利用
+      description: 会員番号を受け付けクーポンIDを受け付けクーポンIDを受け付け、指定のクーポン利用処理を行う
+      tags:
+        - クーポン
+      parameters:
+        - $ref: '#/components/parameters/tenant'
+        - $ref: '#/components/parameters/staffRequired'
+        - $ref: '#/components/parameters/userId'
+        - in: path
+          name: coupon_code
+          schema:
+            type: string
+            example: cpn001
+          required: true
+          description: クーポンコード
+      responses:
+        '201':
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - timestamp
+                  - payload
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                    description: result
+                  timestamp:
+                    type: integer
+                    example: 1618803973
+                    description: current timestamp
+                  payload:
+                    type: object
+                    required:
+                      - coupon_data
+                    properties:
+                      coupon_data:
+                        $ref: '#/components/schemas/CouponData'
+        '400':
+          $ref: "#/components/responses/400ResponseCode"
+        '401':
+          $ref: "#/components/responses/401ResponseCode"
+        '404':
+          $ref: "#/components/responses/404ResponseCode"
+        '500':
+          $ref: "#/components/responses/500ResponseCode"
+components:
+  schemas:
+    UserData:
+      type: object
+      description: 会員情報
+      required:
+        - id
+        - membership_number
+        - last_name
+        - first_name
+        - last_name_kana
+        - first_name_kana
+        - birthday
+        - email
+        - postal_code
+        - phone_number
+        - valid_user_flag
+        - suspension_flag
+        - system_type
+      properties:
+        id:
+          $ref: '#/components/schemas/UserId'
+        membership_number:
+          $ref: "#/components/schemas/MembershipNumber"
+        last_name:
+          type: string
+          maxLength: 255
+          description: 姓
+          example:
+        first_name:
+          type: string
+          maxLength: 255
+          description: 名
+          example:
+        last_name_kana:
+          type: string
+          maxLength: 255
+          description: 姓（カナ）
+          example:
+        first_name_kana:
+          type: string
+          maxLength: 255
+          description: 名（カナ）
+          example:
+        birthday:
+          type: string
+          pattern: '^\d{8}$'
+          description: |
+            誕生日<br>
+            YYYYMMDD形式
+          example:
+        email:
+          type: string
+          pattern: '^.+@.+\..+$'
+          maxLength: 255
+          description: メールアドレス
+          example: user@example.com
+        postal_code:
+          type: string
+          nullable: true
+          pattern: '^\d{7}$'
+          description: |
+            (国内)郵便番号<br>
+            -(ハイフン)なし
+          example: "1010001"
+        phone_number:
+          type: string
+          pattern: '^\+?\d{9,20}$'
+          description: |
+            電話番号<br>
+            アプリ上 9桁〜20桁で制御、先頭1桁に+を許容
+          example: "09000123456"
+        valid_user_flag:
+          type: boolean
+          nullable: true
+          description: |
+            有効ユーザーフラグ<br>
+            true: 有効, false: 退会
+          example: true
+        suspension_flag:
+          type: boolean
+          description: |
+            停止フラグ<br>
+            デフォルト：true<br>
+            true（停止）、false（アクティブ）<br>
+            ※停止の場合は、ポイント利用・付与ができない状態
+          example:
+        system_type:
+          $ref: "#/components/schemas/UserSystemType"
+    PresentTermData:
+      type: object
+      required:
+        - total_used_amount
+        - total_nights_stayed
+      properties:
+        total_used_amount:
+          type: integer
+          minimum: 0
+          description: 今期累計利用額
+          example: 100000
+        total_nights_stayed:
+          type: integer
+          minimum: 0
+          description: 今期累計宿泊数
+          example: 10
+    UserId:
+      type: integer
+      minimum: 1
+      description: 会員ID
+      example: 1
+    UserSystemType:
+      type: integer
+      enum:
+        - 1
+        - 2
+      example: 1
+      description: |
+        会員名新旧区分<br>
+        新システム=1, 旧システム=2
+    PointHistoryData:
+      type: object
+      description: ポイント履歴
+      required:
+        - id
+        - registered_at
+        - points
+        - amount
+        - expired_at
+        - is_reduced_tax
+        - reason_kind
+        - reason_text
+        - nights_stayed
+        - facility
+        - registered_staff
+        - notes
+        - revision_note
+        - last_updated_at
+        - last_update_staff
+        - campaign
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          description: ポイント履歴ID
+          example: 1
+        registered_at:
+          type: string
+          format: date-time
+          description: 登録日時
+          example: 2021/10/01 10:00:00
+        points:
+          type: integer
+          description: ポイント増減数
+          example: 100
+        amount:
+          type: integer
+          minimum: 1
+          description: 売上金額（税込）
+          example: 1
+        expired_at:
+          type: string
+          nullable: true
+          format: date-time
+          description: ポイント有効期限
+          example: 2021/10/01 10:00:00
+        is_reduced_tax:
+          type: boolean
+          description: 軽減税率対象
+        reason_kind:
+          type: integer
+          minimum: 1
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 99
+          description: |
+            ポイント増減の理由<br>
+            1: USED 2: EARNED, 3: EDIT, 4: EXPIRED, 5: DELETED, 6: JOINED, 7: REISSUE, 99: OTHER
+          example: 1
+        reason_text:
+          type: string
+          minLength: 0
+          maxLength: 255
+          description: ポイント増減の理由
+          example: 売上ポイント
+        nights_stayed:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: 宿泊日数入力（フロントのみ）
+          example: 1
+        facility:
+          $ref: "#/components/schemas/FacilityDataIncludeParent"
+        registered_staff:
+          $ref: "#/components/schemas/StaffDataNullable"
+        notes:
+          type: string
+          minLength: 0
+          maxLength: 100
+          description: 特記事項
+          example: xxx
+        revision_note:
+          type: string
+          nullable: true
+          description: 修正理由
+          maxLength: 100
+          example: yyy
+        last_updated_at:
+          type: string
+          format: date-time
+          description: 修正日時
+          example: 2021/10/01 10:00:00
+        last_update_staff:
+          description: |
+            最終更新スタッフ<br>
+            店舗操作の場合、更新したスタッフのユーザーマスタIDが保存される
+          $ref: "#/components/schemas/StaffDataNullable"
+        campaign:
+          type: object
+          nullable: true
+          required:
+            - id
+            - name
+          properties:
+            id:
+              type: integer
+              minimum: 1
+              example: 1
+              description: キャンペーンID
+            name:
+              type: string
+              minLength: 1
+              maxLength: 255
+              example: ポイント2倍キャンペーン
+              description: キャンペーン名
+    FacilityDataIncludeParent:
+      type: object
+      description: 施設情報（親施設を含める）
+      required:
+        - id
+        - name
+        - code
+        - kind
+        - parent
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          description: 施設ID
+          example: 1
+        name:
+          $ref: "#/components/schemas/FacilityName"
+        code:
+          $ref: "#/components/schemas/FacilityCode"
+        kind:
+          $ref: "#/components/schemas/FacilityKind"
+        phone_number:
+          $ref: "#/components/schemas/FacilityPhoneNumber"
+        parent:
+          $ref: "#/components/schemas/FacilityData"
+    FacilityData:
+      type: object
+      nullable: true
+      description: parent_facilityの場合はnullable
+      required:
+        - id
+        - name
+        - code
+        - kind
+      properties:
+        id:
+          type: integer
+          description: 施設ID
+          example: 1
+        name:
+          $ref: "#/components/schemas/FacilityName"
+        code:
+          $ref: "#/components/schemas/FacilityCode"
+        kind:
+          $ref: "#/components/schemas/FacilityKind"
+        phone_number:
+          $ref: "#/components/schemas/FacilityPhoneNumber"
+    FacilityName:
+      type: string
+      description: 施設・店舗名
+      example: ホテル大阪
+      minLength: 1
+      maxLength: 255
+    FacilityCode:
+      type: string
+      pattern: '^[\w-]{1,30}$'
+      description: |
+        施設コード<br>
+        半角英数字, ハイフン, アンダースコアを許容
+      example: 1234
+    FacilityKind:
+      type: integer
+      nullable: true
+      description: |
+        種別<br>
+        1: ホテル<br>
+        2: 受付フロント
+      example: 1
+    FacilityPhoneNumber:
+      type: string
+      pattern: '^\+?\d{9,20}$'
+      nullable: true
+      description: |
+        電話番号<br>
+        アプリ上 9桁〜20桁で制御、先頭1桁に+を許容
+      example: "09012345678"
+    StaffData:
+      type: object
+      description: スタッフ情報
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          description: スタッフID
+          example: 1
+        name:
+          $ref: "#/components/schemas/StaffName"
+    StaffDataNullable:
+      type: object
+      description: スタッフ情報
+      nullable: true
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          description: スタッフID
+          example: 1
+        name:
+          $ref: "#/components/schemas/StaffName"
+    StaffName:
+      type: string
+      description: 施設・店舗のスタッフ名
+      example: 佐藤一郎
+      minLength: 1
+      maxLength: 255
+    MembershipNumber:
+      type: string
+      minLength: 1
+      maxLength: 255
+      description: 会員番号
+      example: 0123456789
+    CouponData:
+      type: object
+      description: クーポン情報
+      required:
+        - id
+        - name
+        - code
+        - facilities
+        - validity_period
+        - description
+        - is_usable
+        - usage_limit
+        - remain_usable_count
+        - used_count
+      properties:
+        id:
+          type: integer
+          description: クーポンID
+          minimum: 1
+          example: 1
+        name:
+          type: string
+          description: クーポン名
+          minLength: 1
+          maxLength: 255
+          example: 1
+        code:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: クーポンコード
+          example: cpn001
+        facilities:
+          type: array
+          nullable: true
+          description: 利用可能店舗一覧
+          items:
+            $ref: "#/components/schemas/FacilityDataIncludeParent"
+        validity_period:
+          type: object
+          description: 有効期間
+          required:
+            - start_at
+            - end_at
+          properties:
+            start_at:
+              type: string
+              format: date-time
+              description: 開始日
+              example: 2021/10/01 10:00:00
+            end_at:
+              type: string
+              format: date-time
+              description: 終了日
+              example: 2021/10/01 10:00:00
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 内容
+          example: ポイント付与(2000PT)
+        is_usable:
+          type: boolean
+          description: |
+            利用可能フラグ<br>
+            true: 使用可能, false: 使用不可能
+          example: true
+        usage_limit:
+          type: integer
+          minimum: 1
+          description: ご利用回数上限（使用済み回数分も含む）
+          example: 3
+        remain_usable_count:
+          type: integer
+          minimum: 0
+          description: 残り利用可能回数
+          example: 1
+        used_count:
+          type: integer
+          minimum: 0
+          description: 利用済み回数
+          example: 2
+    Pagination:
+      type: object
+      description: "pagination"
+      required:
+        - total_count
+        - current_page
+        - per_page
+        - is_last_page
+      properties:
+        total_count:
+          type: integer
+          minimum: 0
+          description: ""
+          example: 150
+        current_page:
+          type: integer
+          minimum: 1
+          description: ""
+          example: 1
+        per_page:
+          type: integer
+          minimum: 1
+          description: ""
+          example: 50
+        is_last_page:
+          type: boolean
+          description: ""
+          example: true
+    RankData:
+      type: object
+      required:
+        - id
+        - name
+        - condition_data
+        - point_grant_rate
+        - is_auto_rank_down
+        - is_default_rank
+      properties:
+        id:
+          type: integer
+          description: ランクIDを
+          example: 1
+        name:
+          type: string
+          description: ランク名
+          example: ゴールド
+        condition_data:
+          type: object
+          required:
+            - minimum_nights_stayed
+            - minimum_usage_amount
+          properties:
+            minimum_nights_stayed:
+              type: integer
+              minimum: 0
+              description: 累積宿泊数の下限
+              example: 1
+            minimum_usage_amount:
+              type: integer
+              minimum: 0
+              description: 累積利用額の下限
+              example: 1
+        point_grant_rate:
+          type: number
+          description: ポイント付与率
+          example: 1.5
+        is_auto_rank_down:
+          type: boolean
+          description: 自動ランクダウン
+          example: false
+        is_default_rank:
+          type: boolean
+          description: 会員のデフォルトランク
+          example: true
+    UserPoints:
+      type: object
+      required:
+        - total_points
+        - current_points
+        - current_point_details
+        - expiration_list
+      properties:
+        total_points:
+          type: integer
+          description: 通算獲得ポイント数
+          example: 1000
+        current_points:
+          type: integer
+          description: 現在保有しているポイント数
+          example: 150
+        current_point_details:
+          type: object
+          required:
+            - common_points
+            - campaign_points
+          properties:
+            common_points:
+              type: object
+              required:
+                - points
+                - expired_at
+              properties:
+                points:
+                  type: integer
+                  description: 通常ポイント残高
+                  example: 500
+                expired_at:
+                  type: string
+                  nullable: true
+                  format: date-time
+                  description: |
+                    通常ポイントの有効期限<br>
+                    nullの場合は期限なし
+                  example: 2021/10/01 10:00:00
+            campaign_points:
+              type: object
+              required:
+                - points
+                - expired_at
+              properties:
+                points:
+                  type: integer
+                  description: キャンペーンポイント残高
+                  example: 1000
+                expired_at:
+                  type: string
+                  nullable: true
+                  format: date-time
+                  description: |
+                    キャンペーンポイントの最短有効期限<br>
+                    nullの場合は期限なし
+                  example: 2022/10/01 10:00:00
+          description: 現在保有しているポイントの情報
+
+        expiration_list:
+          type: array
+          description: |
+            有効期限が近い順にソートされた配列<br>
+            expired_atがnullの場合は有効期限無し
+          items:
+            type: object
+            required:
+              - points
+              - expired_at
+            properties:
+              points:
+                type: integer
+                description: ポイント数
+                example: 100
+              expired_at:
+                type: string
+                nullable: true
+                format: date-time
+                description: 有効期限日時
+                example: 2021/10/01 10:00:00
+    BadRequestErrorCode:
+      type: string
+      example: "200X"
+      enum:
+        - "200X"
+    UnauthorizedErrorCode:
+      type: string
+      example: "200X"
+      enum:
+        - "200X"
+    ForbiddenErrorCode:
+      type: string
+      example: "200X"
+      enum:
+        - "200X"
+    NotFoundErrorCode:
+      type: string
+      example: "200X"
+      enum:
+        - "200X"
+    ServerErrorErrorCode:
+      type: string
+      example: "200X"
+      enum:
+        - "200X"
+  parameters:
+    perPage:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        default: 50
+      description: ページサイズ
+      example: 50
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+      description: ページ番号
+      example: 1
+    tenant:
+      name: "AUTHORIZATION-CLIENT"
+      in: header
+      description: "Tenant name"
+      required: true
+      schema:
+        type: string
+      example: rcourd
+    staff:
+      name: "RCloud-StaffId"
+      in: header
+      description: |
+        ログイン中のスタッフID<br>
+        未ログインの場合は不要
+      required: false
+      schema:
+        type: integer
+      example: 1
+    staffRequired:
+      name: "RCloud-StaffId"
+      in: header
+      description: |
+        ログイン中のスタッフID
+      required: true
+      schema:
+        type: integer
+      example: 1
+    userId:
+      in: path
+      name: user_id
+      description: 会員ID
+      example: 1
+      required: true
+      schema:
+        type: string
+        minimum: 1
+  responses:
+    400ResponseCode:
+      description: "Bad Request Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/BadRequestErrorCode'
+              error_msg:
+                type: string
+                description: "Error Message"
+                example: "Message"
+    401ResponseCode:
+      description: "Unauthorized Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/UnauthorizedErrorCode'
+              error_msg:
+                type: string
+                description: "Error Message"
+                example: "Message"
+    403ResponseCode:
+      description: "Forbidden Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/ForbiddenErrorCode'
+              error_msg:
+                type: string
+                description: "Error Message"
+                example: "Message"
+    404ResponseCode:
+      description: "Not Found Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/NotFoundErrorCode'
+              error_msg:
+                type: string
+                description: "Error Message"
+                example: "Message"
+    500ResponseCode:
+      description: "Server Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - timestamp
+              - error_code
+              - error_msg
+            properties:
+              success:
+                type: boolean
+                example: false
+              timestamp:
+                type: integer
+                description: "unixtime"
+                example: 1621912345
+              error_code:
+                $ref: '#/components/schemas/ServerErrorErrorCode'
+              error_msg:
+                type: string
+                description: "Error Message"
+                example: "Message"
