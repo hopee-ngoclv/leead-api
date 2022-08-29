@@ -5,15 +5,19 @@ echo "1"
 
 npm i redoc-cli
 
-echo "psdddddddddddddddddddd" 
+echo "---------------pwd------------" 
 echo "$PWD"
-echo "lllllllllllllllllllllll" 
+echo "---------------ll------------" 
 echo "$LL"
+echo "-------------------" 
+
 
 # echo pwd 
 # Bundle OpenAPI to HTML
 rm index.html
-echo "lllllllllllllllllllllll" 
+echo "---------------ll------------" 
 echo "$LL"
+echo "---------------------------" 
+
 
 redoc-cli build leead-web-app.yaml --output index.html
