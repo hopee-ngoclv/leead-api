@@ -15,7 +15,6 @@ echo "-------------------"
 
 # echo pwd 
 # Bundle OpenAPI to HTML
-rm index.html
 echo "---------------ll------------" 
 echo "$LS"
 echo "---------------------------" 
