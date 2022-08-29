@@ -20,4 +20,7 @@ ls
 echo "---------------------------" 
 
 
-redoc-cli build leead-web-app.yaml --output index.html
+# redoc-cli build leead-web-app.yaml --output index.html
+mkdir test
+# redoc-cli bundle leead-web-app.yaml -o index.html
+
