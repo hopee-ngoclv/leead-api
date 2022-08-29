@@ -9,14 +9,14 @@ yarn global add redoc-cli
 echo "---------------pwd------------" 
 echo "$PWD"
 echo "---------------ll------------" 
-echo "$LS"
+ls
 echo "-------------------" 
 
 
 # echo pwd 
 # Bundle OpenAPI to HTML
 echo "---------------ll------------" 
-echo "$LS"
+ls
 echo "---------------------------" 
 
 
