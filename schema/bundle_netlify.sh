@@ -10,4 +10,5 @@ echo "$PWD"
 
 # echo pwd 
 # Bundle OpenAPI to HTML
-redoc-cli bundle leead-web-app.yaml -o index.html
+rm index.html
+redoc-cli build leead-web-app.yaml --output index.html
